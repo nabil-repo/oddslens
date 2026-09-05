@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OddsLens — Event Contract Mappings & Options</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="dashboard-layout">
+    <!-- Top Navigation -->
+    <header class="dashboard-header">
+      <div class="header-content">
+        <div class="brand-group">
+          <img src="../icons/icon48.png" alt="OddsLens Logo" class="brand-logo">
+          <div>
+            <h1>OddsLens Ecosystem Dashboard</h1>
+            <p class="subtitle">Somnia × DreamDEX Event Contracts Inline Distribution Engine</p>
+          </div>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-secondary" id="btn-reset-defaults">↺ Reset Defaults</button>
+          <button class="btn btn-secondary" id="btn-export-json">⤓ Export JSON</button>
+          <label class="btn btn-secondary" for="import-file">⤒ Import JSON</label>
+          <input type="file" id="import-file" accept=".json" style="display: none;">
+          <a href="../demo/index.html" target="_blank" class="btn btn-primary">🎪 Open Demo Hub</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="dashboard-main">
+      <!-- Top Grid: Network Status & Protocol Overview -->
+      <section class="grid-two-col">
+        <!-- Network & RPC Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Network & Protocol Connectivity</h2>
+            <span class="badge" id="net-badge">Shannon Testnet 50312</span>
+          </div>
+          <div class="card-body">
+            <div class="form-row">
+              <label for="select-network">Active Network</label>
+              <select id="select-network" class="form-select">
+                <option value="testnet" selected>Somnia Shannon Testnet (Chain ID 50312)</option>
+                <option value="mainnet">Somnia Mainnet (Chain ID 5031)</option>
+                <option value="simulation">Offline Simulation Only</option>
+              </select>
+            </div>
+
+            <div class="stats-row">
+              <div class="stat-box">
+                <span class="stat-name">DreamDEX WS Feed</span>
+                <span class="stat-value text-green" id="opt-ws-status">Connecting...</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-name">Somnia RPC Node</span>
+                <span class="stat-value" id="opt-rpc-status">Operational</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-name">Collateral Token</span>
+                <span class="stat-value">tUSDC (6 dec)</span>
+              </div>
+            </div>
+
+            <div class="links-row">
+              <a href="https://shannon-explorer.somnia.network" target="_blank" class="text-link">Shannon Explorer ↗</a>
+              <span class="divider">•</span>
+              <a href="https://docs.dreamdex.io/developers/event-contracts" target="_blank" class="text-link">DreamDEX Event Docs ↗</a>
+              <span class="divider">•</span>
+              <a href="https://app.dreamdex.io" target="_blank" class="text-link">DreamDEX App ↗</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Matching Sandbox Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2>Live Matcher Sandbox</h2>
+            <span class="badge badge-accent">Test Scorer</span>
+          </div>
+          <div class="card-body">
+            <p class="card-desc">Test any news headline, article excerpt, or URL to see how the OddsLens matching algorithm scores it against the manifest.</p>
+            <div class="sandbox-input-group">
+              <input type="text" id="sandbox-input" class="form-input" placeholder="Enter headline, keyword, or URL (e.g. 'Manchester City Champions League')...">
+              <button class="btn btn-primary" id="btn-sandbox-test">Run Scorer</button>
+            </div>
+            <div id="sandbox-result" class="sandbox-result hidden">
+              <div class="sandbox-result-header">
+                <span class="res-title" id="sand-title"></span>
+                <span class="res-score" id="sand-score"></span>
+              </div>
+              <div class="res-tokens" id="sand-tokens"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Event Contracts Table Section -->
+      <section class="card table-card">
+        <div class="card-header table-header">
+          <div>
+            <h2>Curated Event Contracts & Mappings</h2>
+            <p class="card-desc">Manage the registry of live contracts, URL match patterns, and keyword dictionaries.</p>
+          </div>
+          <button class="btn btn-primary" id="btn-add-contract">+ Add Event Contract</button>
+        </div>
+
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Event / Asset</th>
+                <th>Contract Symbol</th>
+                <th>Category</th>
+                <th>Live Odds (UP / DOWN)</th>
+                <th>Curated URL Patterns</th>
+                <th>Trigger Keywords</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="contracts-tbody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <!-- Add / Edit Modal -->
+    <div class="modal-backdrop hidden" id="contract-modal">
+      <div class="modal-window">
+        <div class="modal-header">
+          <h3 id="modal-heading">Add Event Contract</h3>
+          <button class="modal-close" id="btn-close-modal">✕</button>
+        </div>
+        <form id="contract-form" class="modal-body">
+          <input type="hidden" id="form-id">
+          
+          <div class="form-group">
+            <label for="form-title">Event Title *</label>
+            <input type="text" id="form-title" class="form-input" required placeholder="e.g. Will Solana flip Ethereum by market cap?">
+          </div>
+
+          <div class="form-row-two">
+            <div class="form-group">
+              <label for="form-symbol">Market Symbol (YES leg) *</label>
+              <input type="text" id="form-symbol" class="form-input" required placeholder="e.g. SOL-FLIP-ETH/USDso#YES">
+            </div>
+            <div class="form-group">
+              <label for="form-asset">Asset / Code *</label>
+              <input type="text" id="form-asset" class="form-input" required placeholder="e.g. SOL">
+            </div>
+          </div>
+
+          <div class="form-row-two">
+            <div class="form-group">
+              <label for="form-category">Category</label>
+              <select id="form-category" class="form-select">
+                <option value="Crypto">Crypto</option>
+                <option value="Sports">Sports</option>
+                <option value="Macro">Macro</option>
+                <option value="Ecosystem">Ecosystem</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="form-prob">Initial Probability (0.01 - 0.99)</label>
+              <input type="number" id="form-prob" class="form-input" step="0.01" min="0.05" max="0.95" value="0.50">
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="form-patterns">Curated URL Patterns (comma-separated)</label>
+            <input type="text" id="form-patterns" class="form-input" placeholder="e.g. *://*coindesk.com/*, */demo/crypto-article.html*">
+          </div>
+
+          <div class="form-group">
+            <label for="form-keywords">Trigger Keywords (comma-separated)</label>
+            <textarea id="form-keywords" class="form-textarea" rows="2" placeholder="e.g. solana, sol, ethereum, eth, flippening, market cap"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="form-url">Target Trade URL on DreamDEX</label>
+            <input type="url" id="form-url" class="form-input" value="https://app.dreamdex.io">
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-modal">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="btn-save-contract">Save Contract</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast hidden"></div>
+  </div>
+
+  <script src="options.js" type="module"></script>
+</body>
+</html>

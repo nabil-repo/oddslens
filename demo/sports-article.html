@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Champions League Blockbuster: Real Madrid vs Manchester City Match Preview — Apex Sports</title>
+  <link rel="stylesheet" href="article.css">
+</head>
+<body>
+  <!-- Header Bar -->
+  <nav class="pub-nav">
+    <div class="pub-nav-inner">
+      <div class="pub-brand">APEX<span>SPORTS</span></div>
+      <div class="pub-nav-links">
+        <a href="#">Football</a>
+        <a href="#">Champions League</a>
+        <a href="#">Odds & Markets</a>
+        <a href="#">Scores</a>
+      </div>
+      <div class="pub-status">● MATCH CENTER LIVE</div>
+    </div>
+  </nav>
+
+  <main class="article-container">
+    <div class="article-meta-top">
+      <span class="meta-tag">UEFA CHAMPIONS LEAGUE</span>
+      <span class="meta-date">September 5, 2026 • 4 min read</span>
+    </div>
+
+    <h1 class="article-headline">
+      Real Madrid and Manchester City Set for Clash of European Titans
+    </h1>
+
+    <p class="article-lead">
+      The two most dominant forces in modern European football prepare to renew their iconic rivalry at the Santiago Bernabéu, with event market odds shifting dramatically.
+    </p>
+
+    <div class="author-row">
+      <div class="author-avatar">MC</div>
+      <div class="author-info">
+        <span class="author-name">Mateo Cruz</span>
+        <span class="author-role">European Football Correspondent</span>
+      </div>
+    </div>
+
+    <article class="article-content">
+      <div class="demo-callout">
+        <div class="callout-badge">OddsLens Live Demo Playground</div>
+        <p>
+          💡 <strong>How to test OddsLens on this page:</strong><br>
+          • <strong>Auto-Detect:</strong> If the OddsLens extension is installed, the widget will automatically detect this sports URL and render the Real Madrid vs Manchester City event contract.<br>
+          • <strong>Manual Mode:</strong> Highlight text below (such as <mark>Real Madrid</mark> or <mark>Champions League</mark>), right-click, and choose <em>"🔍 Check DreamDEX odds for this"</em>.
+        </p>
+      </div>
+
+      <p>
+        The stage is set for another breathtaking chapter in continental football as <mark class="match-hint">Real Madrid</mark> welcomes Pep Guardiola’s <mark class="match-hint">Manchester City</mark> to the Spanish capital. With both teams in commanding domestic form, analysts across global betting and on-chain prediction venues are split on who will seize the first-leg advantage.
+      </p>
+
+      <p>
+        Carlo Ancelotti’s side has enjoyed a sensational campaign, spurred on by the lethal partnership between <mark class="match-hint">Vinicius</mark> Junior and Jude <mark class="match-hint">Bellingham</mark>. Madrid’s ability to conjure moments of individual brilliance in high-leverage knockout ties has historically made them resilient against any tactical challenge.
+      </p>
+
+      <blockquote>
+        "At the Bernabéu on a Champions League night, probabilities mean very little once the whistle blows. But on-chain markets are trading this closer than ever before," said Madrid midfielder Luka Modrić.
+      </blockquote>
+
+      <h2>Erling Haaland and City’s Relentless Machine</h2>
+      <p>
+        On the opposing side, Erling <mark class="match-hint">Haaland</mark> will look to pierce Madrid’s backline. The Norwegian powerhouse has already racked up 11 goals in European competition this season, supported by Kevin De Bruyne’s incisive distribution.
+      </p>
+
+      <p>
+        On <mark class="match-hint">DreamDEX</mark>, where binary event contracts for the <mark class="match-hint">UCL</mark> final have crossed over $89,000 in volume on the Somnia blockchain, the odds currently lean slightly toward Madrid holding home advantage at 54% to 46%.
+      </p>
+    </article>
+  </main>
+
+  <!-- Standalone Demo Fallback Script -->
+  <script type="module">
+    import { OddsLensWidget } from '../content/widget.js';
+    import { DEFAULT_MARKETS } from '../background/manifest-data.js';
+
+    setTimeout(() => {
+      if (!document.querySelector('odds-lens-overlay')) {
+        const widget = document.createElement('odds-lens-overlay');
+        document.body.appendChild(widget);
+        const uclMarket = DEFAULT_MARKETS.find(m => m.id === 'market-ucl-final') || DEFAULT_MARKETS[2];
+        widget.init(uclMarket, {
+          trigger: 'demo-curated',
+          soundEffects: true,
+          candidates: DEFAULT_MARKETS
+        });
+
+        document.addEventListener('mouseup', () => {
+          const sel = window.getSelection().toString().trim().toLowerCase();
+          if (sel.length > 2) {
+            let target = uclMarket;
+            if (sel.includes('btc') || sel.includes('bitcoin')) {
+              target = DEFAULT_MARKETS.find(m => m.id === 'market-btc-100k');
+            } else if (sel.includes('somnia')) {
+              target = DEFAULT_MARKETS.find(m => m.id === 'market-somi-tps');
+            }
+            if (target && target.id !== widget.market.id) {
+              widget.init(target, { trigger: 'demo-selection', candidates: DEFAULT_MARKETS });
+            }
+          }
+        });
+
+        setInterval(() => {
+          if (widget.market) {
+            const delta = (Math.random() - 0.49) * 0.02;
+            const newProb = Math.max(0.1, Math.min(0.9, Math.round((widget.market.probability + delta) * 1000) / 1000));
+            widget.updateOdds({
+              marketId: widget.market.id,
+              probability: newProb,
+              bestBid: Math.round((newProb - 0.01) * 1000) / 1000,
+              bestAsk: Math.round((newProb + 0.01) * 1000) / 1000
+            });
+          }
+        }, 3400);
+      }
+    }, 800);
+  </script>
+</body>
+</html>

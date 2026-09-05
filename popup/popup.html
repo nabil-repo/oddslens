@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OddsLens — DreamDEX Live Odds</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="popup-wrapper">
+    <!-- Header -->
+    <header class="popup-header">
+      <div class="brand-row">
+        <div class="brand-title">
+          <img src="../icons/icon48.png" alt="OddsLens" class="brand-logo">
+          <div>
+            <h1>OddsLens</h1>
+            <span class="brand-sub">DreamDEX × Somnia</span>
+          </div>
+        </div>
+        <div class="status-pill" id="ws-status">
+          <span class="status-dot"></span>
+          <span class="status-text">Connected</span>
+        </div>
+      </div>
+      <div class="network-bar">
+        <span class="network-badge" id="network-badge">Shannon Testnet 50312</span>
+        <span class="block-number" id="block-number">Block #...</span>
+      </div>
+    </header>
+
+    <!-- Quick Settings Toggles -->
+    <section class="controls-card">
+      <div class="toggle-row">
+        <span class="toggle-label">Curated Auto-Detect</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-autodetect" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Live Simulation Volatility</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-simulation" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="toggle-row">
+        <span class="toggle-label">Odds Movement Audio Chimes</span>
+        <label class="switch">
+          <input type="checkbox" id="toggle-audio" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Keyword Tester -->
+    <section class="tester-card">
+      <label class="section-title" for="tester-input">Quick Keyword Match Tester</label>
+      <div class="tester-input-wrap">
+        <input type="text" id="tester-input" placeholder="Type topic (e.g. Bitcoin, Somnia, Madrid)...">
+        <button id="btn-test-match">Test</button>
+      </div>
+      <div id="test-result" class="test-result hidden">
+        <div class="result-title" id="result-title"></div>
+        <div class="result-meta">
+          <span class="confidence-badge" id="result-conf"></span>
+          <button class="btn-preview-widget" id="btn-preview-widget">Launch on Tab ↗</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Active Markets Section -->
+    <section class="markets-card">
+      <div class="section-header">
+        <span class="section-title">Tracked Event Contracts</span>
+        <span class="market-count" id="market-count">4 Markets</span>
+      </div>
+      <div class="markets-list" id="markets-list">
+        <!-- Injected dynamically -->
+      </div>
+    </section>
+
+    <!-- Footer Links -->
+    <footer class="popup-footer">
+      <button class="footer-btn" id="btn-open-options">⚙ Options & Mappings</button>
+      <button class="footer-btn secondary" id="btn-open-demo">🎪 Demo Showcase</button>
+    </footer>
+  </div>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

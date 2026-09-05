@@ -1,0 +1,423 @@
+// OddsLens Shadow DOM Widget Component
+
+export class OddsLensWidget extends HTMLElement {
+  constructor() {
+    super();
+    this.attachShadow({ mode: 'open' });
+    this.market = null;
+    this.meta = {};
+    this.countdownTimer = null;
+    this.betAmount = 10;
+    this.isMinimized = false;
+    this.isDragging = false;
+    this.dragOffset = { x: 0, y: 0 };
+    this.audioCtx = null;
+  }
+
+  static get observedAttributes() {
+    return [];
+  }
+
+  connectedCallback() {
+    // Default placement: top-right corner with 24px padding
+    if (!this.style.top && !this.style.bottom) {
+      this.style.top = '24px';
+      this.style.right = '24px';
+    }
+  }
+
+  disconnectedCallback() {
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+    }
+  }
+
+  init(market, meta = {}) {
+    this.market = { ...market };
+    this.meta = { ...meta };
+    this.betAmount = meta.defaultBetAmount || 10;
+    this.render();
+    this.startCountdown();
+  }
+
+  updateOdds(tickData) {
+    if (!this.market || (tickData.marketId && tickData.marketId !== this.market.id)) {
+      return;
+    }
+
+    const prevProb = this.market.probability;
+    this.market.probability = tickData.probability;
+    if (tickData.bestBid !== undefined) this.market.bestBid = tickData.bestBid;
+    if (tickData.bestAsk !== undefined) this.market.bestAsk = tickData.bestAsk;
+    if (tickData.volume24h !== undefined) this.market.volume24h = tickData.volume24h;
+    if (tickData.tradeCount !== undefined) this.market.tradeCount = tickData.tradeCount;
+
+    // Trigger visual pulse
+    const container = this.shadowRoot.querySelector('.oddslens-container');
+    if (container) {
+      const isUp = tickData.probability >= prevProb;
+      container.classList.remove('pulsing-up', 'pulsing-down');
+      // Trigger reflow
+      void container.offsetWidth;
+      container.classList.add(isUp ? 'pulsing-up' : 'pulsing-down');
+      setTimeout(() => {
+        container.classList.remove('pulsing-up', 'pulsing-down');
+      }, 700);
+    }
+
+    // Play subtle audio chime if enabled
+    if (this.meta.soundEffects) {
+      this.playTickAudio(tickData.probability >= prevProb);
+    }
+
+    this.updateDynamicValues();
+  }
+
+  playTickAudio(isUp) {
+    try {
+      if (!this.audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        if (AudioContextClass) this.audioCtx = new AudioContextClass();
+      }
+      if (this.audioCtx && this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume();
+      }
+      if (this.audioCtx) {
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(isUp ? 680 : 420, this.audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(isUp ? 880 : 340, this.audioCtx.currentTime + 0.08);
+        gain.gain.setValueAtTime(0.04, this.audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.08);
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+        osc.start();
+        osc.stop(this.audioCtx.currentTime + 0.08);
+      }
+    } catch (e) {}
+  }
+
+  formatCountdown(seconds) {
+    if (seconds <= 0) return 'Settling...';
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${hrs.toString().padStart(2, '0')}h ${mins.toString().padStart(2, '0')}m ${secs.toString().padStart(2, '0')}s`;
+  }
+
+  startCountdown() {
+    if (this.countdownTimer) clearInterval(this.countdownTimer);
+    this.countdownTimer = setInterval(() => {
+      const el = this.shadowRoot.querySelector('.countdown-timer');
+      if (el && this.market && this.market.expiry) {
+        const remaining = Math.max(0, this.market.expiry - Math.floor(Date.now() / 1000));
+        el.textContent = this.formatCountdown(remaining);
+      }
+    }, 1000);
+  }
+
+  calculatePayouts() {
+    const prob = Math.max(0.01, Math.min(0.99, this.market.probability || 0.5));
+    const upPayout = (this.betAmount / prob).toFixed(2);
+    const downPayout = (this.betAmount / (1 - prob)).toFixed(2);
+    const upMultiplier = (1 / prob).toFixed(2);
+    const downMultiplier = (1 / (1 - prob)).toFixed(2);
+    return { upPayout, downPayout, upMultiplier, downMultiplier };
+  }
+
+  render() {
+    if (!this.market) return;
+
+    const prob = Math.max(0.01, Math.min(0.99, this.market.probability || 0.5));
+    const upPercent = Math.round(prob * 100);
+    const downPercent = 100 - upPercent;
+    const { upPayout, downPayout, upMultiplier, downMultiplier } = this.calculatePayouts();
+
+    const remaining = Math.max(0, (this.market.expiry || (Math.floor(Date.now() / 1000) + 14400)) - Math.floor(Date.now() / 1000));
+    const countdownStr = this.formatCountdown(remaining);
+
+    // CSS injection into shadow root (safe across both Chrome extension and standalone web preview)
+    const cssUrl = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL)
+      ? chrome.runtime.getURL('content/widget.css')
+      : (window.location.pathname.includes('/demo/') ? '../content/widget.css' : '/content/widget.css');
+
+    if (this.isMinimized) {
+      this.shadowRoot.innerHTML = `
+        <link rel="stylesheet" href="${cssUrl}">
+        <div class="oddslens-minimized" title="Click to expand OddsLens">
+          <div class="live-dot"></div>
+          <span class="minimized-title">${this.market.asset || 'ODDS'}</span>
+          <span class="minimized-odds">${upPercent}% UP</span>
+        </div>
+      `;
+      this.shadowRoot.querySelector('.oddslens-minimized').addEventListener('click', () => {
+        this.isMinimized = false;
+        this.render();
+        this.startCountdown();
+      });
+      return;
+    }
+
+    this.shadowRoot.innerHTML = `
+      <link rel="stylesheet" href="${cssUrl}">
+      <div class="oddslens-container" role="dialog" aria-label="DreamDEX Odds Widget">
+        
+        <!-- Header & Drag Bar -->
+        <div class="oddslens-header">
+          <div class="header-left">
+            <div class="brand-badge">
+              <svg class="brand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="9" stroke="#00F0FF" />
+                <path d="M7 15l4-4 3 3 4-6" stroke="#00FF87" />
+              </svg>
+              <span>ODDSLENS</span>
+            </div>
+            <span class="network-tag">Somnia L1</span>
+            <div class="live-indicator">
+              <span class="live-dot"></span>
+              <span>LIVE</span>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="icon-btn btn-minimize" title="Minimize widget">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+            </button>
+            <button class="icon-btn btn-close" title="Close widget">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Body -->
+        <div class="oddslens-body">
+          <div class="event-meta">
+            <span class="category-pill">${this.market.category || 'Prediction'}</span>
+            <div class="expiry-countdown">
+              <span>Resolves:</span>
+              <span class="countdown-timer">${countdownStr}</span>
+            </div>
+          </div>
+
+          <div class="event-title">${this.market.title}</div>
+
+          <!-- Odds Probability Dual Bar -->
+          <div class="odds-gauge-card">
+            <div class="odds-labels-row">
+              <div class="side-label">
+                <span class="side-title up">▲ YES / UP</span>
+                <div class="side-odds-wrap">
+                  <span class="side-percent up">${upPercent}%</span>
+                  <span class="side-payout up-mult">${upMultiplier}x</span>
+                </div>
+              </div>
+              <div class="side-label">
+                <span class="side-title down">▼ NO / DOWN</span>
+                <div class="side-odds-wrap">
+                  <span class="side-payout down-mult">${downMultiplier}x</span>
+                  <span class="side-percent down">${downPercent}%</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="odds-bar-track">
+              <div class="odds-bar-fill-up" style="width: ${upPercent}%;"></div>
+              <div class="odds-bar-fill-down" style="width: ${downPercent}%;"></div>
+            </div>
+
+            <!-- Orderbook Touch Stats -->
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-label">Best Bid</span>
+                <span class="stat-val bid-val">${(this.market.bestBid || (prob - 0.01)).toFixed(2)}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">Best Ask</span>
+                <span class="stat-val ask-val">${(this.market.bestAsk || (prob + 0.01)).toFixed(2)}</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-label">24h Vol</span>
+                <span class="stat-val vol-val">$${(this.market.volume24h || 10000).toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Bet Calculator -->
+          <div class="calc-card">
+            <div class="calc-header">
+              <span class="calc-title">Simulate Payout ($USDso)</span>
+              <div class="calc-chips">
+                <button class="chip-btn ${this.betAmount === 5 ? 'active' : ''}" data-val="5">$5</button>
+                <button class="chip-btn ${this.betAmount === 10 ? 'active' : ''}" data-val="10">$10</button>
+                <button class="chip-btn ${this.betAmount === 25 ? 'active' : ''}" data-val="25">$25</button>
+                <button class="chip-btn ${this.betAmount === 50 ? 'active' : ''}" data-val="50">$50</button>
+              </div>
+            </div>
+            <div class="calc-payout-row">
+              <span>Betting $${this.betAmount} on UP pays: <strong class="payout-val up">$${upPayout}</strong></span>
+              <span>on DOWN pays: <strong class="payout-val down">$${downPayout}</strong></span>
+            </div>
+          </div>
+
+          <!-- Candidates switcher if multiple detected -->
+          ${this.renderCandidatesSwitcher()}
+
+          <!-- Action Button: Trade on DreamDEX -->
+          <div class="action-row">
+            <a class="trade-btn" href="${this.market.targetTradeUrl || 'https://app.dreamdex.io'}" target="_blank" rel="noopener noreferrer">
+              <span>Trade on DreamDEX</span>
+              <span class="btn-arrow">↗</span>
+            </a>
+          </div>
+
+        </div>
+      </div>
+    `;
+
+    this.attachEventListeners();
+  }
+
+  renderCandidatesSwitcher() {
+    if (!this.meta.candidates || this.meta.candidates.length <= 1) return '';
+    const otherCandidates = this.meta.candidates.filter(c => c.id !== this.market.id);
+    if (otherCandidates.length === 0) return '';
+
+    return `
+      <div class="candidates-bar">
+        <span>Related market:</span>
+        <span class="candidate-pill" data-id="${otherCandidates[0].id}">
+          ${otherCandidates[0].title.slice(0, 32)}...
+        </span>
+      </div>
+    `;
+  }
+
+  updateDynamicValues() {
+    const prob = Math.max(0.01, Math.min(0.99, this.market.probability || 0.5));
+    const upPercent = Math.round(prob * 100);
+    const downPercent = 100 - upPercent;
+    const { upPayout, downPayout, upMultiplier, downMultiplier } = this.calculatePayouts();
+
+    const root = this.shadowRoot;
+    const upPercentEl = root.querySelector('.side-percent.up');
+    const downPercentEl = root.querySelector('.side-percent.down');
+    const upMultEl = root.querySelector('.up-mult');
+    const downMultEl = root.querySelector('.down-mult');
+    const fillUp = root.querySelector('.odds-bar-fill-up');
+    const fillDown = root.querySelector('.odds-bar-fill-down');
+    const bidEl = root.querySelector('.bid-val');
+    const askEl = root.querySelector('.ask-val');
+    const volEl = root.querySelector('.vol-val');
+    const payoutUpEl = root.querySelector('.payout-val.up');
+    const payoutDownEl = root.querySelector('.payout-val.down');
+
+    if (upPercentEl) upPercentEl.textContent = `${upPercent}%`;
+    if (downPercentEl) downPercentEl.textContent = `${downPercent}%`;
+    if (upMultEl) upMultEl.textContent = `${upMultiplier}x`;
+    if (downMultEl) downMultEl.textContent = `${downMultiplier}x`;
+    if (fillUp) fillUp.style.width = `${upPercent}%`;
+    if (fillDown) fillDown.style.width = `${downPercent}%`;
+    if (bidEl) bidEl.textContent = (this.market.bestBid || (prob - 0.01)).toFixed(2);
+    if (askEl) askEl.textContent = (this.market.bestAsk || (prob + 0.01)).toFixed(2);
+    if (volEl) volEl.textContent = `$${(this.market.volume24h || 10000).toLocaleString()}`;
+    if (payoutUpEl) payoutUpEl.textContent = `$${upPayout}`;
+    if (payoutDownEl) payoutDownEl.textContent = `$${downPayout}`;
+  }
+
+  attachEventListeners() {
+    const root = this.shadowRoot;
+
+    // Minimize button
+    const minBtn = root.querySelector('.btn-minimize');
+    if (minBtn) {
+      minBtn.addEventListener('click', () => {
+        this.isMinimized = true;
+        this.render();
+      });
+    }
+
+    // Close button
+    const closeBtn = root.querySelector('.btn-close');
+    if (closeBtn) {
+      closeBtn.addEventListener('click', () => {
+        this.style.opacity = '0';
+        this.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+          this.remove();
+        }, 200);
+      });
+    }
+
+    // Bet calculator chips
+    const chipBtns = root.querySelectorAll('.chip-btn');
+    chipBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        chipBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        this.betAmount = Number(btn.getAttribute('data-val'));
+        this.updateDynamicValues();
+      });
+    });
+
+    // Related candidate switcher
+    const candidatePill = root.querySelector('.candidate-pill');
+    if (candidatePill) {
+      candidatePill.addEventListener('click', () => {
+        const id = candidatePill.getAttribute('data-id');
+        if (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage) {
+          chrome.runtime.sendMessage({ type: 'GET_STATE' }, (res) => {
+            if (res && res.markets) {
+              const nextMarket = res.markets.find(m => m.id === id);
+              if (nextMarket) {
+                this.init(nextMarket, this.meta);
+              }
+            }
+          });
+        } else if (this.meta.candidates) {
+          const nextMarket = this.meta.candidates.find(m => m.id === id);
+          if (nextMarket) this.init(nextMarket, this.meta);
+        }
+      });
+    }
+
+    // Draggable header
+    const header = root.querySelector('.oddslens-header');
+    if (header) {
+      header.addEventListener('mousedown', (e) => {
+        this.isDragging = true;
+        const rect = this.getBoundingClientRect();
+        this.dragOffset.x = e.clientX - rect.left;
+        this.dragOffset.y = e.clientY - rect.top;
+
+        const onMouseMove = (moveEvent) => {
+          if (!this.isDragging) return;
+          const newLeft = Math.max(10, Math.min(window.innerWidth - rect.width - 10, moveEvent.clientX - this.dragOffset.x));
+          const newTop = Math.max(10, Math.min(window.innerHeight - rect.height - 10, moveEvent.clientY - this.dragOffset.y));
+          this.style.left = `${newLeft}px`;
+          this.style.top = `${newTop}px`;
+          this.style.right = 'auto';
+        };
+
+        const onMouseUp = () => {
+          this.isDragging = false;
+          window.removeEventListener('mousemove', onMouseMove);
+          window.removeEventListener('mouseup', onMouseUp);
+        };
+
+        window.addEventListener('mousemove', onMouseMove);
+        window.addEventListener('mouseup', onMouseUp);
+      });
+    }
+  }
+}
+
+// Define custom element if not already defined
+if (!customElements.get('odds-lens-overlay')) {
+  customElements.define('odds-lens-overlay', OddsLensWidget);
+}

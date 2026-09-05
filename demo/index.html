@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OddsLens — Interactive Demo Showcase & Judge Hub</title>
+  <link rel="stylesheet" href="demo.css">
+</head>
+<body>
+  <div class="demo-hub-container">
+    <header class="hub-header">
+      <div class="hub-badge">Somnia × DreamDEX Event Contracts Hackathon</div>
+      <div class="hub-title-row">
+        <img src="../icons/icon128.png" alt="OddsLens Logo" class="hub-logo">
+        <div>
+          <h1>OddsLens Interactive Demo Hub</h1>
+          <p class="hub-subtitle">Inline DreamDEX Event Contract Odds Browser Extension</p>
+        </div>
+      </div>
+      <p class="hub-intro">
+        OddsLens solves prediction market distribution: surfacing live on-chain odds directly inline wherever sports fans, crypto traders, and news readers are already engaged.
+      </p>
+    </header>
+
+    <!-- Demo Beats Navigation Grid -->
+    <section class="demo-grid">
+      <!-- Beat 1: Crypto News Page (Auto-Detect + Manual Selection) -->
+      <div class="demo-card">
+        <div class="card-tag tag-auto">Curated Auto-Detect + Manual</div>
+        <div class="card-icon">⚡</div>
+        <h3>Crypto News Demo Page</h3>
+        <p class="card-desc">
+          Simulates a CoinDesk/Bloomberg breaking news article on Somnia throughput and Bitcoin milestones.
+        </p>
+        <div class="card-features">
+          <span>✓ Auto-detects <strong>SOMI TPS</strong> & <strong>BTC 100k</strong> contracts</span>
+          <span>✓ Select "Bitcoin" or "Somnia" text & right-click for Manual Mode</span>
+        </div>
+        <a href="crypto-article.html" class="demo-link-btn">Launch Crypto Article ↗</a>
+      </div>
+
+      <!-- Beat 2: Sports Recap Page (Auto-Detect + Manual Selection) -->
+      <div class="demo-card">
+        <div class="card-tag tag-auto">Curated Auto-Detect + Manual</div>
+        <div class="card-icon">⚽</div>
+        <h3>Sports Recap Demo Page</h3>
+        <p class="card-desc">
+          Simulates an ESPN/Athletic recap for UEFA Champions League: Real Madrid vs Manchester City.
+        </p>
+        <div class="card-features">
+          <span>✓ Auto-detects <strong>UCL Final</strong> odds bar</span>
+          <span>✓ Select "Real Madrid" or "Haaland" to test manual trigger</span>
+        </div>
+        <a href="sports-article.html" class="demo-link-btn">Launch Sports Article ↗</a>
+      </div>
+
+      <!-- Beat 3: Macro & Politics Page (Auto-Detect) -->
+      <div class="demo-card">
+        <div class="card-tag tag-auto">Curated Auto-Detect + Manual</div>
+        <div class="card-icon">🏛</div>
+        <h3>Macro & Rates Demo Page</h3>
+        <p class="card-desc">
+          Simulates a WSJ/Financial Times macro report on the Federal Reserve interest rate decision.
+        </p>
+        <div class="card-features">
+          <span>✓ Auto-detects <strong>Fed 50 bps Cut</strong> contract</span>
+          <span>✓ Select "rate cut" or "Jerome Powell" for manual check</span>
+        </div>
+        <a href="macro-article.html" class="demo-link-btn">Launch Macro Article ↗</a>
+      </div>
+
+      <!-- Beat 4: Options & Extensibility Dashboard -->
+      <div class="demo-card highlight">
+        <div class="card-tag tag-eco">Ecosystem Impact Highlight</div>
+        <div class="card-icon">⚙</div>
+        <h3>Options & Custom Mappings</h3>
+        <p class="card-desc">
+          Manage event contracts, URL match patterns, and keyword scoring dictionaries. The key extensibility story for ecosystem growth.
+        </p>
+        <div class="card-features">
+          <span>✓ Add, edit, or remove live event mappings</span>
+          <span>✓ Import / Export manifest JSON</span>
+          <span>✓ Live Matcher Sandbox testing</span>
+        </div>
+        <a href="../options/options.html" target="_blank" class="demo-link-btn primary">Open Options Dashboard ↗</a>
+      </div>
+    </section>
+
+    <!-- Hackathon Video Script Reference -->
+    <section class="script-section">
+      <h2>🎬 2–3 Minute Demo Video Walkthrough Script</h2>
+      <div class="timeline">
+        <div class="timeline-step">
+          <div class="time-pill">00:00 – 00:20</div>
+          <h4>1. The Problem</h4>
+          <p>Explain that prediction markets and event contracts usually sit behind dedicated trading interfaces. 99% of sports fans, crypto readers, and political followers never see them where they already read.</p>
+        </div>
+        <div class="timeline-step">
+          <div class="time-pill">00:20 – 00:55</div>
+          <h4>2. Manual Mode (The Core Product)</h4>
+          <p>Highlight any text on an arbitrary article (e.g. "Bitcoin", "Real Madrid") &rarr; right-click &rarr; <em>"Check DreamDEX odds for this"</em>. Show the broadcast-quality widget appear instantly with live animated odds, touch spread, and countdown timer.</p>
+        </div>
+        <div class="timeline-step">
+          <div class="time-pill">00:55 – 01:30</div>
+          <h4>3. Curated Auto-Detect (The Magic Beat)</h4>
+          <p>Open the curated Sports or Crypto article. Watch OddsLens slide in automatically on page load. Point out the live glowing pulse on odds ticks, dual probability bars, and built-in bet calculator ($10 &rarr; $14.93 payout).</p>
+        </div>
+        <div class="timeline-step">
+          <div class="time-pill">01:30 – 01:50</div>
+          <h4>4. One-Click Trade Flow</h4>
+          <p>Click "Trade on DreamDEX ↗". Show the deep link into DreamDEX Event Contracts on Somnia testnet.</p>
+        </div>
+        <div class="timeline-step">
+          <div class="time-pill">01:50 – 02:15</div>
+          <h4>5. Ecosystem Impact & Extensibility</h4>
+          <p>Open the Options page. Show that any publisher, community member, or DAO can add new URL patterns and keyword mappings, export JSON, or switch networks.</p>
+        </div>
+        <div class="timeline-step">
+          <div class="time-pill">02:15 – 02:30</div>
+          <h4>6. Conclusion & Roadmap</h4>
+          <p>Wrap up with Somnia's agentic high-throughput capabilities and post-hackathon plans (NLP topic detection, publisher revenue share).</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Somnia Ecosystem Surges as DreamDEX Volumes Peak Ahead of Major Milestone — CryptoDaily</title>
+  <link rel="stylesheet" href="article.css">
+</head>
+<body>
+  <!-- Header Bar -->
+  <nav class="pub-nav">
+    <div class="pub-nav-inner">
+      <div class="pub-brand">CRYPTO<span>DAILY</span></div>
+      <div class="pub-nav-links">
+        <a href="#">Markets</a>
+        <a href="#">Ecosystems</a>
+        <a href="#">Policy</a>
+        <a href="#">Derivatives</a>
+      </div>
+      <div class="pub-status">● LIVE MARKETS</div>
+    </div>
+  </nav>
+
+  <main class="article-container">
+    <!-- Breadcrumb & Tag -->
+    <div class="article-meta-top">
+      <span class="meta-tag">LAYER 1 ECOSYSTEMS</span>
+      <span class="meta-date">September 5, 2026 • 5 min read</span>
+    </div>
+
+    <h1 class="article-headline">
+      Somnia Ecosystem Surges as DreamDEX Event Contracts Drive Record On-Chain Volume
+    </h1>
+
+    <p class="article-lead">
+      High-throughput blockchain network Somnia is seeing a major spike in liquidity and trader activity, led by prediction markets on DreamDEX and anticipation of Bitcoin’s push past $100,000.
+    </p>
+
+    <!-- Author & Share -->
+    <div class="author-row">
+      <div class="author-avatar">JD</div>
+      <div class="author-info">
+        <span class="author-name">James Devon</span>
+        <span class="author-role">Chief DeFi Analyst</span>
+      </div>
+    </div>
+
+    <!-- Article Body -->
+    <article class="article-content">
+      <!-- Demo Callout Box -->
+      <div class="demo-callout">
+        <div class="callout-badge">OddsLens Live Demo Playground</div>
+        <p>
+          💡 <strong>How to test OddsLens on this page:</strong><br>
+          • <strong>Auto-Detect:</strong> If the OddsLens extension is installed, the widget will slide in automatically from the top-right corner.<br>
+          • <strong>Manual Mode:</strong> Highlight any text below (like <mark>Bitcoin</mark> or <mark>Somnia TPS</mark>), right-click, and select <em>"🔍 Check DreamDEX odds for this"</em>.
+        </p>
+      </div>
+
+      <p>
+        Activity across the <mark class="match-hint">Somnia</mark> network has accelerated over the past 24 hours as on-chain prediction markets gain institutional and retail momentum. Powered by its agentic Layer 1 architecture, Somnia’s high-throughput execution environment has handled unprecedented volume, with validators reporting sustained peaks nearing <mark class="match-hint">100,000 TPS</mark> on the Shannon Testnet.
+      </p>
+
+      <p>
+        At the center of this growth is <mark class="match-hint">DreamDEX</mark>, an on-chain Central Limit Order Book (CLOB) perpetuals and derivatives protocol. DreamDEX’s innovative <strong>Event Contracts</strong> feature has introduced fixed-payout, directional markets with zero-spread minting, enabling participants to trade directly on real-world events.
+      </p>
+
+      <blockquote>
+        "Prediction markets belong in the context where news is consumed. Real-time liquidity on Somnia allows sub-second settlement for outcome contracts without off-chain custody risk," noted one ecosystem researcher.
+      </blockquote>
+
+      <h2>Bitcoin Eyes New All-Time Highs</h2>
+      <p>
+        Concurrently, macro market sentiment remains intensely bullish on <mark class="match-hint">Bitcoin</mark>. With heavy ETF inflows and post-halving supply squeezes taking full effect, traders are positioning for a breakout above <mark class="match-hint">$100,000</mark> within the current monthly settlement window.
+      </p>
+
+      <p>
+        On DreamDEX Event Contracts, binary Up/Down contracts on BTC price windows have recorded over $190,000 in open interest, reflecting widespread engagement from both automated AI agents and manual traders.
+      </p>
+
+      <h2>The Rise of Inline Prediction Distribution</h2>
+      <p>
+        While decentralized prediction markets have historically suffered from distribution bottlenecks requiring users to navigate complex decentralized applications, new interfaces like inline browser lenses and social bots are bringing live odds directly to readers wherever news breaks.
+      </p>
+    </article>
+  </main>
+
+  <!-- Standalone Demo Fallback (enables interactive preview even if extension not yet loaded) -->
+  <script type="module">
+    import { OddsLensWidget } from '../content/widget.js';
+    import { DEFAULT_MARKETS } from '../background/manifest-data.js';
+
+    // If extension content script isn't active, provide native demo auto-detect
+    setTimeout(() => {
+      if (!document.querySelector('odds-lens-overlay')) {
+        console.log('[Demo Standalone] Initializing standalone OddsLens widget for preview');
+        const widget = document.createElement('odds-lens-overlay');
+        document.body.appendChild(widget);
+        // Find Somnia TPS market
+        const somiMarket = DEFAULT_MARKETS.find(m => m.id === 'market-somi-tps') || DEFAULT_MARKETS[1];
+        widget.init(somiMarket, {
+          trigger: 'demo-curated',
+          soundEffects: true,
+          candidates: DEFAULT_MARKETS
+        });
+
+        // Add contextmenu listener in page for manual selection demo
+        document.addEventListener('mouseup', (e) => {
+          const sel = window.getSelection().toString().trim();
+          if (sel.length > 2) {
+            // Find best matching market
+            const lower = sel.toLowerCase();
+            let target = somiMarket;
+            if (lower.includes('btc') || lower.includes('bitcoin') || lower.includes('100,000') || lower.includes('100k')) {
+              target = DEFAULT_MARKETS.find(m => m.id === 'market-btc-100k');
+            }
+            if (target && target.id !== widget.market.id) {
+              widget.init(target, { trigger: 'demo-selection', candidates: DEFAULT_MARKETS });
+            }
+          }
+        });
+
+        // Simulate periodic ticks in standalone mode
+        setInterval(() => {
+          if (widget.market) {
+            const delta = (Math.random() - 0.48) * 0.02;
+            const newProb = Math.max(0.1, Math.min(0.9, Math.round((widget.market.probability + delta) * 1000) / 1000));
+            widget.updateOdds({
+              marketId: widget.market.id,
+              probability: newProb,
+              bestBid: Math.round((newProb - 0.01) * 1000) / 1000,
+              bestAsk: Math.round((newProb + 0.01) * 1000) / 1000
+            });
+          }
+        }, 3600);
+      }
+    }, 800);
+  </script>
+</body>
+</html>

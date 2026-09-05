@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Federal Reserve Enters High-Stakes Policy Window Amid Shifting Rate Cut Odds — Global Journal</title>
+  <link rel="stylesheet" href="article.css">
+</head>
+<body>
+  <!-- Header Bar -->
+  <nav class="pub-nav">
+    <div class="pub-nav-inner">
+      <div class="pub-brand">GLOBAL<span>JOURNAL</span></div>
+      <div class="pub-nav-links">
+        <a href="#">Economy</a>
+        <a href="#">Central Banks</a>
+        <a href="#">Bonds & Rates</a>
+        <a href="#">Macro Markets</a>
+      </div>
+      <div class="pub-status">● FINANCIAL WIRES</div>
+    </div>
+  </nav>
+
+  <main class="article-container">
+    <div class="article-meta-top">
+      <span class="meta-tag">MONETARY POLICY</span>
+      <span class="meta-date">September 5, 2026 • 6 min read</span>
+    </div>
+
+    <h1 class="article-headline">
+      Federal Reserve Enters Critical Decision Window as Markets Weigh Probability of 50 bps Cut
+    </h1>
+
+    <p class="article-lead">
+      Chair Jerome Powell and the Federal Open Market Committee prepare to convene, with derivative and prediction markets adjusting expectations for interest rate cuts.
+    </p>
+
+    <div class="author-row">
+      <div class="author-avatar">EP</div>
+      <div class="author-info">
+        <span class="author-name">Elena Rostova</span>
+        <span class="author-role">Senior Central Bank Editor</span>
+      </div>
+    </div>
+
+    <article class="article-content">
+      <div class="demo-callout">
+        <div class="callout-badge">OddsLens Live Demo Playground</div>
+        <p>
+          💡 <strong>How to test OddsLens on this page:</strong><br>
+          • <strong>Auto-Detect:</strong> If OddsLens is installed, the widget will recognize this macro/rates URL and display the Fed 50 bps cut event contract.<br>
+          • <strong>Manual Mode:</strong> Highlight phrases like <mark>Federal Reserve</mark>, <mark>rate cut</mark>, or <mark>Jerome Powell</mark>, right-click, and select <em>"🔍 Check DreamDEX odds for this"</em>.
+        </p>
+      </div>
+
+      <p>
+        Washington — The <mark class="match-hint">Federal Reserve</mark> is standing on the precipice of its most pivotal monetary policy decision of the cycle. Following cooling inflation prints and nuanced labor market signals, debate among FOMC participants has intensified over whether to commence easing with a conventional 25 basis point reduction or an aggressive <mark class="match-hint">rate cut</mark> of 50 basis points.
+      </p>
+
+      <p>
+        Fed Chairman <mark class="match-hint">Jerome Powell</mark> hinted in recent remarks that the balance of risks has shifted from runaway inflation toward employment preservation. "We will adjust the stance of policy based on the totality of the incoming data and the evolving balance of risks," Powell stated.
+      </p>
+
+      <blockquote>
+        "Prediction markets offer an unvarnished, real-time barometer of market consensus that traditional surveys often lag," said one Wall Street chief economist.
+      </blockquote>
+
+      <h2>Decentralized Event Contracts as Real-Time Forecasts</h2>
+      <p>
+        On decentralized trading venue <mark class="match-hint">DreamDEX</mark>, powered by the high-throughput Somnia blockchain, liquidity has surged into binary interest rate contracts. Market participants are pricing the probability of a jumbo 50 bps reduction at approximately 38%, with $63,000 in volume executed in the current FOMC trading window.
+      </p>
+
+      <p>
+        With tools like <mark class="match-hint">OddsLens</mark>, retail readers and financial journalists are now seeing these dynamic probabilities embedded directly into news feeds, bridging on-chain DeFi markets with macroeconomic analysis.
+      </p>
+    </article>
+  </main>
+
+  <!-- Standalone Demo Fallback Script -->
+  <script type="module">
+    import { OddsLensWidget } from '../content/widget.js';
+    import { DEFAULT_MARKETS } from '../background/manifest-data.js';
+
+    setTimeout(() => {
+      if (!document.querySelector('odds-lens-overlay')) {
+        const widget = document.createElement('odds-lens-overlay');
+        document.body.appendChild(widget);
+        const fedMarket = DEFAULT_MARKETS.find(m => m.id === 'market-fed-rates') || DEFAULT_MARKETS[3];
+        widget.init(fedMarket, {
+          trigger: 'demo-curated',
+          soundEffects: true,
+          candidates: DEFAULT_MARKETS
+        });
+
+        document.addEventListener('mouseup', () => {
+          const sel = window.getSelection().toString().trim().toLowerCase();
+          if (sel.length > 2) {
+            let target = fedMarket;
+            if (sel.includes('btc') || sel.includes('bitcoin')) {
+              target = DEFAULT_MARKETS.find(m => m.id === 'market-btc-100k');
+            } else if (sel.includes('somnia')) {
+              target = DEFAULT_MARKETS.find(m => m.id === 'market-somi-tps');
+            }
+            if (target && target.id !== widget.market.id) {
+              widget.init(target, { trigger: 'demo-selection', candidates: DEFAULT_MARKETS });
+            }
+          }
+        });
+
+        setInterval(() => {
+          if (widget.market) {
+            const delta = (Math.random() - 0.47) * 0.02;
+            const newProb = Math.max(0.1, Math.min(0.9, Math.round((widget.market.probability + delta) * 1000) / 1000));
+            widget.updateOdds({
+              marketId: widget.market.id,
+              probability: newProb,
+              bestBid: Math.round((newProb - 0.01) * 1000) / 1000,
+              bestAsk: Math.round((newProb + 0.01) * 1000) / 1000
+            });
+          }
+        }, 3500);
+      }
+    }, 800);
+  </script>
+</body>
+</html>
