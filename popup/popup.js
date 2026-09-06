@@ -198,6 +198,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         try {
           await chrome.tabs.sendMessage(tabId, msg);
+          setTimeout(() => {
+            try { window.close(); } catch (e) { }
+          }, 100);
         } catch (err) {
           // If tab was loaded before extension update, dynamically inject scripts and retry
           if (chrome.scripting && chrome.scripting.executeScript) {
@@ -208,6 +211,9 @@ document.addEventListener('DOMContentLoaded', async () => {
               });
               setTimeout(() => {
                 chrome.tabs.sendMessage(tabId, msg).catch(() => { });
+                setTimeout(() => {
+                  try { window.close(); } catch (e) { }
+                }, 100);
               }, 150);
             } catch (injectErr) {
               console.warn('[OddsLens] Script injection fallback failed', injectErr);

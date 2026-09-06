@@ -8,9 +8,18 @@
 
   console.log('[OddsLens] Content script initialized on', window.location.href);
 
-  // Ensure OddsLensWidget custom element is defined
-  if (!customElements.get('odds-lens-overlay') && typeof OddsLensWidget !== 'undefined') {
-    customElements.define('odds-lens-overlay', OddsLensWidget);
+  // Safe Custom Elements registration check
+  const hasCustomElements = typeof window !== 'undefined' &&
+    typeof window.customElements !== 'undefined' &&
+    window.customElements !== null &&
+    typeof window.customElements.define === 'function';
+
+  if (hasCustomElements && typeof OddsLensWidget !== 'undefined') {
+    try {
+      if (!window.customElements.get('odds-lens-overlay')) {
+        window.customElements.define('odds-lens-overlay', OddsLensWidget);
+      }
+    } catch (e) { }
   }
 
   let activeWidget = null;
@@ -92,13 +101,13 @@
   function displayWidget(market, meta = {}) {
     if (!market) return;
 
-    // Ensure custom element is registered
-    if (!customElements.get('odds-lens-overlay') && typeof OddsLensWidget !== 'undefined') {
-      customElements.define('odds-lens-overlay', OddsLensWidget);
-    }
-
     if (!activeWidget || !document.contains(activeWidget)) {
-      activeWidget = document.querySelector('odds-lens-overlay') || document.createElement('odds-lens-overlay');
+      activeWidget = document.querySelector('odds-lens-overlay, [data-oddslens-widget="true"]');
+      if (!activeWidget) {
+        activeWidget = (typeof window.createOddsLensWidget === 'function')
+          ? window.createOddsLensWidget()
+          : document.createElement('odds-lens-overlay');
+      }
       const target = document.body || document.documentElement;
       if (!document.contains(activeWidget) && target) {
         target.appendChild(activeWidget);
