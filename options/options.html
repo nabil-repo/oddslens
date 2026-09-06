@@ -98,14 +98,14 @@
       <!-- AI Configuration Card -->
       <section class="card" id="ai-config-card">
         <div class="card-header">
-          <h2>✨ AI Configuration</h2>
-          <span class="badge badge-accent">New</span>
+          <h2>✨ AI Configuration (OpenRouter & Gemini)</h2>
+          <span class="badge badge-accent">Multi-LLM</span>
         </div>
         <div class="card-body">
           <p class="card-desc">
-            OddsLens uses AI to analyze article sentiment and generate market insights.
+            OddsLens uses AI to analyze article sentiment and generate real-time market insights.
             Entity extraction and sentiment analysis work out-of-the-box with no API key.
-            Gemini-powered insights require a free Google AI Studio API key.
+            For live LLM insights, paste your <strong>OpenRouter API key</strong> (supports Gemini, Claude, Llama, DeepSeek) or a Google Gemini API key.
           </p>
 
           <div class="form-row">
@@ -117,13 +117,13 @@
           </div>
 
           <div class="form-group" id="gemini-key-group">
-            <label for="gemini-api-key">Gemini API Key (optional — for AI-powered insights)</label>
+            <label for="gemini-api-key">OpenRouter or Gemini API Key (optional — for live LLM insights)</label>
             <div class="input-row">
               <input
                 type="password"
                 id="gemini-api-key"
                 class="form-input"
-                placeholder="AIzaSy... (get one free at aistudio.google.com)"
+                placeholder="sk-or-v1-... (OpenRouter) or AIzaSy... (Gemini)"
                 autocomplete="off"
               >
               <button class="btn btn-secondary" id="btn-toggle-key-visibility" title="Show/hide key">👁</button>
@@ -137,8 +137,8 @@
               <p id="ai-test-text" style="font-size: 12px; color: var(--text-secondary); margin-top: 6px; font-style: italic;"></p>
             </div>
             <p style="margin-top: 6px; font-size: 11px; color: var(--text-muted);">
-              ⚠ Key stored locally in <code>chrome.storage.local</code>, never transmitted except directly to the Gemini API.
-              Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-link">aistudio.google.com ↗</a>
+              ⚠ Keys are stored locally in <code>chrome.storage.local</code> and sent only to OpenRouter or Google APIs.
+              Get an OpenRouter key at <a href="https://openrouter.ai/keys" target="_blank" class="text-link">openrouter.ai/keys ↗</a> or Gemini at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-link">aistudio.google.com ↗</a>
             </p>
           </div>
 
@@ -152,7 +152,7 @@
               <span class="stat-value text-green">Active (Rule-based + TF-IDF)</span>
             </div>
             <div class="stat-box">
-              <span class="stat-name">Gemini Insights</span>
+              <span class="stat-name">AI Insights Provider</span>
               <span class="stat-value" id="ai-gemini-status">No key set</span>
             </div>
           </div>

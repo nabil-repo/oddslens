@@ -265,10 +265,102 @@ export function generateInsightTemplate(market, sentiment) {
   }
 }
 
-// ─── Gemini API Insight Caller ────────────────────────────────────────────────
+// ─── AI Insight Callers (Gemini & OpenRouter) ─────────────────────────────────
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
-const INSIGHT_TIMEOUT_MS = 4000;
+const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
+const INSIGHT_TIMEOUT_MS = 5000;
+
+/**
+ * Detect whether an API key belongs to OpenRouter or Google Gemini.
+ * @param {string} apiKey
+ * @param {string} explicitProvider - 'auto' | 'openrouter' | 'gemini'
+ * @returns {'openrouter'|'gemini'}
+ */
+export function detectAiProvider(apiKey, explicitProvider = 'auto') {
+  if (explicitProvider === 'openrouter' || explicitProvider === 'gemini') {
+    return explicitProvider;
+  }
+  const trimmed = (apiKey || '').trim();
+  if (trimmed.startsWith('sk-or-') || trimmed.startsWith('sk-')) {
+    return 'openrouter';
+  }
+  return 'gemini';
+}
+
+/**
+ * Call the OpenRouter API to generate a 1-sentence market insight.
+ * Supports any OpenRouter model (default: google/gemini-2.0-flash-001).
+ */
+export async function callOpenRouterInsight(market, sentiment, headline, apiKey, model = 'google/gemini-2.0-flash-001') {
+  const prob = market.probability || 0.5;
+  const upPct = Math.round(prob * 100);
+
+  const prompt = [
+    `Market: "${market.title}"`,
+    `Current probability: ${upPct}% YES / ${100 - upPct}% NO`,
+    `Article headline: "${headline || 'No headline available'}"`,
+    `Article sentiment: ${sentiment?.label || 'NEUTRAL'} (score: ${sentiment?.score?.toFixed(2) || '0.00'})`,
+    `Key sentiment words: ${(sentiment?.topWords || []).slice(0, 4).join(', ') || 'none'}`,
+    ``,
+    `Write one short, confident, specific sentence (max 25 words) that helps a retail trader decide on this contract. Focus on what the data implies about market direction.`
+  ].join('\n');
+
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), INSIGHT_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(OPENROUTER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey.trim()}`,
+        'HTTP-Referer': 'https://oddslens.app',
+        'X-Title': 'OddsLens Extension'
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: model || 'google/gemini-2.0-flash-001',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a concise prediction market analyst. Write exactly ONE sentence of insight for a retail trader.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        max_tokens: 60,
+        temperature: 0.7
+      })
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      console.warn('[OddsLens AI] OpenRouter API error:', response.status);
+      return null;
+    }
+
+    const data = await response.json();
+    const text = data?.choices?.[0]?.message?.content?.trim();
+
+    if (!text || text.length < 10) {
+      return null;
+    }
+
+    return { text, source: 'openrouter' };
+  } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === 'AbortError') {
+      console.warn('[OddsLens AI] OpenRouter API timeout');
+    } else {
+      console.warn('[OddsLens AI] OpenRouter error:', err.message);
+    }
+    return null;
+  }
+}
 
 /**
  * Call the Gemini API to generate a 1-sentence market insight.
@@ -307,7 +399,7 @@ export async function callGeminiInsight(market, sentiment, headline, apiKey) {
   const timeoutId = setTimeout(() => controller.abort(), INSIGHT_TIMEOUT_MS);
 
   try {
-    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey}`, {
+    const response = await fetch(`${GEMINI_API_URL}?key=${apiKey.trim()}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       signal: controller.signal,
@@ -349,6 +441,37 @@ export async function callGeminiInsight(market, sentiment, headline, apiKey) {
     }
     return fallback;
   }
+}
+
+/**
+ * Unified AI insight caller that supports both OpenRouter and Google Gemini.
+ * @param {object} market
+ * @param {object} sentiment
+ * @param {string} headline
+ * @param {string} apiKey
+ * @param {object} options - { provider?: 'auto'|'openrouter'|'gemini', model?: string }
+ */
+export async function callAiInsight(market, sentiment, headline, apiKey, options = {}) {
+  const fallback = {
+    text: generateInsightTemplate(market, sentiment),
+    source: 'template'
+  };
+
+  if (!apiKey || apiKey.trim().length < 8) {
+    return fallback;
+  }
+
+  const provider = detectAiProvider(apiKey, options.provider);
+
+  if (provider === 'openrouter') {
+    const result = await callOpenRouterInsight(market, sentiment, headline, apiKey, options.model);
+    if (result && result.text) return result;
+  } else {
+    const result = await callGeminiInsight(market, sentiment, headline, apiKey);
+    if (result && result.text && result.source === 'gemini') return result;
+  }
+
+  return fallback;
 }
 
 // ─── Full Page Analysis Pipeline ─────────────────────────────────────────────

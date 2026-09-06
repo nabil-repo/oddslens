@@ -198,6 +198,8 @@ export const DEFAULT_SETTINGS = {
   tickAnimation: true,
   defaultBetAmount: 10,
   minMatchConfidence: 0.25,
-  geminiApiKey: '', // Gemini API key for AI-powered insights (user-provided)
+  geminiApiKey: '', // Gemini or OpenRouter API key
+  aiProvider: 'auto', // 'auto' | 'openrouter' | 'gemini'
+  openRouterModel: 'google/gemini-2.0-flash-001',
   aiEnabled: true, // Enable/disable AI analysis features
 };

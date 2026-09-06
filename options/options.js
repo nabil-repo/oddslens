@@ -353,15 +353,32 @@ document.addEventListener('DOMContentLoaded', async () => {
   const aiGeminiStatus = document.getElementById('ai-gemini-status');
   const toggleAi = document.getElementById('toggle-ai');
 
-  // Load saved Gemini API key and AI settings
+  // Helper to get descriptive status for OpenRouter or Gemini key
+  function getProviderStatus(key, isLocal = false) {
+    if (!key || key.trim().length < 8) {
+      return { text: 'No key set', className: 'stat-value' };
+    }
+    const trimmed = key.trim();
+    const suffix = isLocal ? ' (Local) ✓' : ' ✓';
+    if (trimmed.startsWith('sk-or-') || trimmed.startsWith('sk-')) {
+      return { text: `OpenRouter Active${suffix}`, className: 'stat-value text-green' };
+    }
+    if (trimmed.startsWith('AIza')) {
+      return { text: `Gemini Active${suffix}`, className: 'stat-value text-green' };
+    }
+    return { text: `Key configured${suffix}`, className: 'stat-value text-green' };
+  }
+
+  // Load saved AI API key and settings
   async function loadAiSettings() {
     if (isExtensionRuntime) {
       const data = await new Promise(resolve => chrome.storage.local.get(['settings'], resolve));
       const s = data.settings || {};
       if (s.geminiApiKey) {
         geminiKeyInput.value = s.geminiApiKey;
-        aiGeminiStatus.textContent = 'Key configured ✓';
-        aiGeminiStatus.className = 'stat-value text-green';
+        const status = getProviderStatus(s.geminiApiKey);
+        aiGeminiStatus.textContent = status.text;
+        aiGeminiStatus.className = status.className;
       }
       if (typeof s.aiEnabled === 'boolean') {
         toggleAi.checked = s.aiEnabled;
@@ -370,8 +387,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       const savedKey = localStorage.getItem('oddslens_gemini_key');
       if (savedKey) {
         geminiKeyInput.value = savedKey;
-        aiGeminiStatus.textContent = 'Key configured (Local) ✓';
-        aiGeminiStatus.className = 'stat-value text-green';
+        const status = getProviderStatus(savedKey, true);
+        aiGeminiStatus.textContent = status.text;
+        aiGeminiStatus.className = status.className;
       }
       const savedAi = localStorage.getItem('oddslens_ai_enabled');
       if (savedAi !== null) {
@@ -380,7 +398,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // Save Gemini key on input (debounced)
+  // Save API key on input (debounced)
   let saveKeyTimer = null;
   geminiKeyInput?.addEventListener('input', () => {
     clearTimeout(saveKeyTimer);
@@ -394,13 +412,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         localStorage.setItem('oddslens_gemini_key', key);
       }
-      if (key.length > 10) {
-        aiGeminiStatus.textContent = 'Key configured ✓';
-        aiGeminiStatus.className = 'stat-value text-green';
-      } else {
-        aiGeminiStatus.textContent = 'No key set';
-        aiGeminiStatus.className = 'stat-value';
-      }
+      const status = getProviderStatus(key);
+      aiGeminiStatus.textContent = status.text;
+      aiGeminiStatus.className = status.className;
     }, 800);
   });
 
@@ -445,8 +459,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (response?.success && response.insight) {
           aiTestResult.classList.remove('hidden');
           aiTestTitle.textContent = testMarket.title.slice(0, 40) + '...';
-          aiTestSource.textContent = response.insight.source === 'gemini' ? '✨ Gemini AI' : '📊 AI Template';
-          aiTestSource.style.color = response.insight.source === 'gemini' ? '#00F0FF' : '#00FF87';
+          const src = response.insight.source;
+          const isOR = src === 'openrouter';
+          const isGem = src === 'gemini';
+          aiTestSource.textContent = isOR ? '⚡ OpenRouter AI' : (isGem ? '✨ Gemini AI' : '📊 AI Template');
+          aiTestSource.style.color = (isOR || isGem) ? '#00F0FF' : '#00FF87';
           aiTestText.textContent = response.insight.text;
         }
       });
@@ -457,7 +474,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         btnTestAiInsight.disabled = false;
         aiTestResult.classList.remove('hidden');
         aiTestTitle.textContent = testMarket.title.slice(0, 40) + '...';
-        aiTestSource.textContent = '📊 AI Template (Extension required for Gemini)';
+        const isOR = key.startsWith('sk-or-') || key.startsWith('sk-');
+        const isGem = key.startsWith('AIza');
+        const providerName = isOR ? 'OpenRouter' : (isGem ? 'Gemini' : 'AI');
+        aiTestSource.textContent = `📊 AI Template (Install extension for live ${providerName})`;
         aiTestSource.style.color = '#00FF87';
         aiTestText.textContent = `At ${Math.round((testMarket.probability || 0.5) * 100)}% probability, this market shows strong YES momentum — aligned with BULLISH article context.`;
       }, 600);

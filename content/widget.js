@@ -379,12 +379,15 @@ export class OddsLensWidget extends HTMLElement {
     // If we already have the insight (from fetchAiInsight), render it directly
     if (this.aiInsight) {
       const isGemini = this.aiInsight.source === 'gemini';
+      const isOpenRouter = this.aiInsight.source === 'openrouter';
+      const badgeText = isGemini ? 'Gemini AI' : (isOpenRouter ? 'OpenRouter AI' : 'AI Analysis');
+      const badgeClass = (isGemini || isOpenRouter) ? 'gemini' : '';
       return `
         <div class="ai-insight-card">
           <div class="ai-card-header">
             <span class="ai-card-icon">${ICONS.SPARKLE}</span>
             AI Market Insight
-            <span class="ai-source-badge ${isGemini ? 'gemini' : ''}">${isGemini ? 'Gemini AI' : 'AI Analysis'}</span>
+            <span class="ai-source-badge ${badgeClass}">${badgeText}</span>
           </div>
           <div class="insight-text">${this.escapeHtml(this.aiInsight.text)}</div>
         </div>
@@ -450,12 +453,16 @@ export class OddsLensWidget extends HTMLElement {
     if (!card || !this.aiInsight) return;
 
     const isGemini = this.aiInsight.source === 'gemini';
+    const isOpenRouter = this.aiInsight.source === 'openrouter';
+    const badgeText = isGemini ? 'Gemini AI' : (isOpenRouter ? 'OpenRouter AI' : 'AI Analysis');
+    const badgeClass = (isGemini || isOpenRouter) ? 'gemini' : '';
+
     card.id = 'ai-card-loaded';
     card.innerHTML = `
       <div class="ai-card-header">
         <span class="ai-card-icon">${ICONS.SPARKLE}</span>
         AI Market Insight
-        <span class="ai-source-badge ${isGemini ? 'gemini' : ''}">${isGemini ? 'Gemini AI' : 'AI Analysis'}</span>
+        <span class="ai-source-badge ${badgeClass}">${badgeText}</span>
       </div>
       <div class="insight-text">${this.escapeHtml(this.aiInsight.text)}</div>
     `;

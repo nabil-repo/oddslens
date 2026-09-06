@@ -4,7 +4,7 @@ import { DEFAULT_MARKETS, DEFAULT_SETTINGS, SOMNIA_NETWORKS } from './manifest-d
 import { matchUrl, matchText } from './matching-engine.js';
 import { DreamDexClient } from './dreamdex-client.js';
 import { MockStreamer } from './mock-streamer.js';
-import { analyzeArticle, callGeminiInsight, generateInsightTemplate } from './ai-engine.js';
+import { analyzeArticle, callAiInsight, callGeminiInsight, generateInsightTemplate } from './ai-engine.js';
 
 let markets = [];
 let settings = { ...DEFAULT_SETTINGS };
@@ -352,8 +352,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       const apiKey = settings.geminiApiKey || '';
 
-      // Async: call Gemini, respond when done
-      callGeminiInsight(market, sentiment, headline, apiKey).then(insight => {
+      // Async: call Gemini or OpenRouter, respond when done
+      callAiInsight(market, sentiment, headline, apiKey, {
+        provider: settings.aiProvider,
+        model: settings.openRouterModel
+      }).then(insight => {
         insightCache.set(cacheKey, { ...insight, ts: Date.now() });
         sendResponse({ success: true, insight });
       }).catch(() => {
