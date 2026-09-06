@@ -310,24 +310,34 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 
     console.log('[OddsLens] Context menu clicked for:', info.selectionText, 'Matched:', targetMarket?.title);
 
-    try {
-      await chrome.tabs.sendMessage(tab.id, msg);
-    } catch (err) {
-      // If tab was loaded before extension update, dynamically inject scripts and retry
-      if (chrome.scripting && chrome.scripting.executeScript) {
-        try {
-          await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['content/widget.js', 'content/content-script.js']
-          });
-          setTimeout(() => {
-            chrome.tabs.sendMessage(tab.id, msg).catch((e) => {
-              console.warn('[OddsLens] Script retry sendMessage failed:', e);
-            });
-          }, 150);
-        } catch (injectErr) {
-          console.warn('[OddsLens] Context menu injection fallback failed', injectErr);
+    const sendToTab = () => new Promise((resolve, reject) => {
+      chrome.tabs.sendMessage(tab.id, msg, (response) => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+          return;
         }
+        resolve(response);
+      });
+    });
+
+    try {
+      await sendToTab();
+    } catch (err) {
+      // If tab was loaded before extension update, dynamically inject scripts and retry.
+      if (!chrome.scripting?.executeScript) {
+        console.warn('[OddsLens] Context menu message failed:', err.message);
+        return;
+      }
+
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content/widget.js', 'content/content-script.js']
+        });
+        await new Promise(resolve => setTimeout(resolve, 150));
+        await sendToTab();
+      } catch (injectErr) {
+        console.warn('[OddsLens] Context menu injection or retry failed:', injectErr);
       }
     }
   }
