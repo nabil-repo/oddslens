@@ -12,6 +12,7 @@ export class OddsLensWidget extends HTMLElement {
     this.isDragging = false;
     this.dragOffset = { x: 0, y: 0 };
     this.audioCtx = null;
+    this.aiInsight = null; // Cached AI insight { text, source }
   }
 
   static get observedAttributes() {
@@ -37,8 +38,11 @@ export class OddsLensWidget extends HTMLElement {
     this.market = { ...market };
     this.meta = { ...meta };
     this.betAmount = meta.defaultBetAmount || 10;
+    this.aiInsight = null; // reset on new market
     this.render();
     this.startCountdown();
+    // Request AI insight asynchronously after render
+    this.fetchAiInsight();
   }
 
   updateOdds(tickData) {
@@ -114,6 +118,12 @@ export class OddsLensWidget extends HTMLElement {
       if (el && this.market && this.market.expiry) {
         const remaining = Math.max(0, this.market.expiry - Math.floor(Date.now() / 1000));
         el.textContent = this.formatCountdown(remaining);
+        // Add urgency class for last 30 minutes
+        if (remaining < 1800 && remaining > 0) {
+          el.classList.add('urgent');
+        } else {
+          el.classList.remove('urgent');
+        }
       }
     }, 1000);
   }
@@ -245,6 +255,10 @@ export class OddsLensWidget extends HTMLElement {
                 <span class="stat-label">24h Vol</span>
                 <span class="stat-val vol-val">$${(this.market.volume24h || 10000).toLocaleString()}</span>
               </div>
+              <div class="stat-item">
+                <span class="stat-label">Open Interest</span>
+                <span class="stat-val oi-val">$${(this.market.openInterest || 198500).toLocaleString()}</span>
+              </div>
             </div>
           </div>
 
@@ -268,6 +282,12 @@ export class OddsLensWidget extends HTMLElement {
           <!-- Candidates switcher if multiple detected -->
           ${this.renderCandidatesSwitcher()}
 
+          <!-- Sentiment Analysis Badge -->
+          ${this.renderSentimentBadge()}
+
+          <!-- AI Insight Card -->
+          ${this.renderAiInsightCard()}
+
           <!-- Action Button: Trade on DreamDEX -->
           <div class="action-row">
             <a class="trade-btn" href="${this.market.targetTradeUrl || 'https://app.dreamdex.io'}" target="_blank" rel="noopener noreferrer">
@@ -281,6 +301,14 @@ export class OddsLensWidget extends HTMLElement {
     `;
 
     this.attachEventListeners();
+    // Trigger entry animation
+    requestAnimationFrame(() => {
+      const container = this.shadowRoot.querySelector('.oddslens-container');
+      if (container) {
+        container.classList.add('entering');
+        setTimeout(() => container.classList.remove('entering'), 500);
+      }
+    });
   }
 
   renderCandidatesSwitcher() {
@@ -295,6 +323,118 @@ export class OddsLensWidget extends HTMLElement {
           ${otherCandidates[0].title.slice(0, 32)}...
         </span>
       </div>
+    `;
+  }
+
+  renderSentimentBadge() {
+    const sentiment = this.meta.aiAnalysis?.sentiment;
+    if (!sentiment) return '';
+
+    const icons = { BULLISH: '📈', BEARISH: '📉', NEUTRAL: '⚖' };
+    const labels = { BULLISH: 'Bullish Context', BEARISH: 'Bearish Context', NEUTRAL: 'Neutral' };
+    const label = sentiment.label || 'NEUTRAL';
+    const icon = icons[label];
+    const text = labels[label];
+    const intensity = Math.round((sentiment.intensity || 0) * 100);
+    const topWords = (sentiment.topWords || []).slice(0, 3).join(', ');
+
+    return `
+      <div class="sentiment-row">
+        <span class="sentiment-badge ${label.toLowerCase()}">
+          <span class="sentiment-icon">${icon}</span>
+          ${text}
+        </span>
+        <div class="sentiment-bar" title="Sentiment intensity: ${intensity}%">
+          <div class="sentiment-fill ${label.toLowerCase()}" style="width: ${intensity}%"></div>
+        </div>
+      </div>
+      ${topWords ? `<div class="sentiment-words">Keywords: ${topWords}</div>` : ''}
+    `;
+  }
+
+  renderAiInsightCard() {
+    // If we already have the insight (from fetchAiInsight), render it directly
+    if (this.aiInsight) {
+      const isGemini = this.aiInsight.source === 'gemini';
+      return `
+        <div class="ai-insight-card">
+          <div class="ai-card-header">
+            <span class="ai-card-icon">✨</span>
+            AI Market Insight
+            <span class="ai-source-badge ${isGemini ? 'gemini' : ''}">${isGemini ? 'Gemini AI' : 'AI Analysis'}</span>
+          </div>
+          <div class="insight-text">${this.escapeHtml(this.aiInsight.text)}</div>
+        </div>
+      `;
+    }
+
+    // Shimmer loading placeholder (insight is being fetched)
+    return `
+      <div class="ai-insight-card" id="ai-card-loading">
+        <div class="ai-card-header">
+          <span class="ai-card-icon">✨</span>
+          AI Market Insight
+          <span class="ai-source-badge">Loading...</span>
+        </div>
+        <div class="insight-shimmer"></div>
+        <div class="insight-shimmer"></div>
+      </div>
+    `;
+  }
+
+  escapeHtml(str) {
+    return String(str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  async fetchAiInsight() {
+    if (!this.market) return;
+
+    const canUseChromeRuntime = typeof chrome !== 'undefined' &&
+      chrome.runtime && chrome.runtime.sendMessage;
+
+    if (!canUseChromeRuntime) {
+      // Standalone demo: generate template directly
+      const { generateInsightTemplate } = await import('../background/ai-engine.js').catch(() => ({ generateInsightTemplate: null }));
+      if (generateInsightTemplate) {
+        this.aiInsight = { text: generateInsightTemplate(this.market, this.meta.aiAnalysis?.sentiment), source: 'template' };
+        this.updateAiCard();
+      }
+      return;
+    }
+
+    chrome.runtime.sendMessage({
+      type: 'GET_AI_INSIGHT',
+      payload: {
+        market: this.market,
+        sentiment: this.meta.aiAnalysis?.sentiment || null,
+        headline: this.meta.headline || document.title || '',
+      }
+    }, (response) => {
+      if (chrome.runtime.lastError) return;
+      if (response?.success && response.insight) {
+        this.aiInsight = response.insight;
+        this.updateAiCard();
+      }
+    });
+  }
+
+  updateAiCard() {
+    const card = this.shadowRoot?.getElementById('ai-card-loading');
+    if (!card || !this.aiInsight) return;
+
+    const isGemini = this.aiInsight.source === 'gemini';
+    card.id = 'ai-card-loaded';
+    card.innerHTML = `
+      <div class="ai-card-header">
+        <span class="ai-card-icon">✨</span>
+        AI Market Insight
+        <span class="ai-source-badge ${isGemini ? 'gemini' : ''}">${isGemini ? 'Gemini AI' : 'AI Analysis'}</span>
+      </div>
+      <div class="insight-text">${this.escapeHtml(this.aiInsight.text)}</div>
     `;
   }
 

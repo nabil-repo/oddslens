@@ -95,6 +95,70 @@
         </div>
       </section>
 
+      <!-- AI Configuration Card -->
+      <section class="card" id="ai-config-card">
+        <div class="card-header">
+          <h2>✨ AI Configuration</h2>
+          <span class="badge badge-accent">New</span>
+        </div>
+        <div class="card-body">
+          <p class="card-desc">
+            OddsLens uses AI to analyze article sentiment and generate market insights.
+            Entity extraction and sentiment analysis work out-of-the-box with no API key.
+            Gemini-powered insights require a free Google AI Studio API key.
+          </p>
+
+          <div class="form-row">
+            <label for="toggle-ai">Enable AI Analysis</label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-ai" checked>
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="form-group" id="gemini-key-group">
+            <label for="gemini-api-key">Gemini API Key (optional — for AI-powered insights)</label>
+            <div class="input-row">
+              <input
+                type="password"
+                id="gemini-api-key"
+                class="form-input"
+                placeholder="AIzaSy... (get one free at aistudio.google.com)"
+                autocomplete="off"
+              >
+              <button class="btn btn-secondary" id="btn-toggle-key-visibility" title="Show/hide key">👁</button>
+              <button class="btn btn-primary" id="btn-test-ai-insight">Test Insight</button>
+            </div>
+            <div id="ai-test-result" class="sandbox-result hidden" style="margin-top: 10px;">
+              <div class="sandbox-result-header">
+                <span class="res-title" id="ai-test-title"></span>
+                <span class="res-score" id="ai-test-source"></span>
+              </div>
+              <p id="ai-test-text" style="font-size: 12px; color: var(--text-secondary); margin-top: 6px; font-style: italic;"></p>
+            </div>
+            <p style="margin-top: 6px; font-size: 11px; color: var(--text-muted);">
+              ⚠ Key stored locally in <code>chrome.storage.local</code>, never transmitted except directly to the Gemini API.
+              Get a free key at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-link">aistudio.google.com ↗</a>
+            </p>
+          </div>
+
+          <div class="stats-row" style="margin-top: 12px;">
+            <div class="stat-box">
+              <span class="stat-name">Sentiment Engine</span>
+              <span class="stat-value text-green">Active (300-word lexicon)</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-name">NLP Matcher</span>
+              <span class="stat-value text-green">Active (Rule-based + TF-IDF)</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-name">Gemini Insights</span>
+              <span class="stat-value" id="ai-gemini-status">No key set</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Event Contracts Table Section -->
       <section class="card table-card">
         <div class="card-header table-header">

@@ -5,7 +5,109 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OddsLens — Interactive Demo Showcase & Judge Hub</title>
+  <meta name="description" content="OddsLens: Live DreamDEX Event Contract odds surfaced inline across any webpage. AI-powered sentiment analysis, NLP entity extraction, and real-time Somnia blockchain integration.">
   <link rel="stylesheet" href="demo.css">
+  <style>
+    /* AI Feature Badge */
+    .ai-feature-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+    .ai-pill {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, rgba(121,40,202,0.25), rgba(0,240,255,0.15));
+      border: 1px solid rgba(121,40,202,0.4);
+      color: #D8B4FE;
+      letter-spacing: 0.3px;
+    }
+
+    /* Live Widget Preview Section */
+    .live-preview-section {
+      background: linear-gradient(135deg, rgba(0,240,255,0.04) 0%, rgba(121,40,202,0.06) 100%);
+      border: 1px solid rgba(0,240,255,0.15);
+      border-radius: 20px;
+      padding: 28px 32px;
+      margin: 28px 0;
+      display: flex;
+      gap: 32px;
+      align-items: flex-start;
+    }
+
+    .preview-text {
+      flex: 1;
+    }
+
+    .preview-text h2 {
+      font-size: 20px;
+      color: #00F0FF;
+      margin: 0 0 8px;
+    }
+
+    .preview-text p {
+      font-size: 13px;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.6;
+      margin: 0 0 16px;
+    }
+
+    .preview-widget-slot {
+      width: 300px;
+      flex-shrink: 0;
+      min-height: 200px;
+      position: relative;
+    }
+
+    odds-lens-overlay {
+      position: relative !important;
+      display: block !important;
+      width: 300px !important;
+      top: auto !important;
+      right: auto !important;
+    }
+
+    /* Header action links */
+    .hub-header-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 16px;
+      flex-wrap: wrap;
+    }
+
+    .hub-action-btn {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s ease;
+    }
+
+    .hub-action-btn.primary {
+      background: linear-gradient(135deg, #00E5FF, #7928CA);
+      color: white;
+    }
+
+    .hub-action-btn.secondary {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      color: rgba(255,255,255,0.8);
+    }
+
+    .hub-action-btn:hover {
+      transform: translateY(-1px);
+      opacity: 0.9;
+    }
+  </style>
 </head>
 
 <body>
@@ -16,20 +118,48 @@
         <img src="../icons/icon128.png" alt="OddsLens Logo" class="hub-logo">
         <div>
           <h1>OddsLens Interactive Demo Hub</h1>
-          <p class="hub-subtitle">Inline DreamDEX Event Contract Odds Browser Extension</p>
+          <p class="hub-subtitle">AI-Powered Inline DreamDEX Event Contract Odds — Somnia Browser Extension</p>
         </div>
       </div>
       <p class="hub-intro">
-        OddsLens solves prediction market distribution: surfacing live on-chain odds directly inline wherever sports
-        fans, crypto traders, and news readers are already engaged.
+        OddsLens solves prediction market distribution: surfacing live on-chain odds <strong>directly inline</strong>
+        wherever sports fans, crypto traders, and news readers are already engaged — with AI-powered sentiment analysis
+        and NLP entity matching.
       </p>
+      <div class="hub-header-actions">
+        <a href="https://github.com/your-username/oddslens" target="_blank" class="hub-action-btn primary">📂 GitHub Repo ↗</a>
+        <a href="../options/options.html" target="_blank" class="hub-action-btn secondary">⚙ Options Dashboard</a>
+        <a href="https://app.dreamdex.io" target="_blank" class="hub-action-btn secondary">🔗 DreamDEX App ↗</a>
+      </div>
     </header>
+
+    <!-- Live Widget Preview -->
+    <div class="live-preview-section">
+      <div class="preview-text">
+        <h2>✨ Live Widget Preview</h2>
+        <p>
+          This is the OddsLens widget exactly as it appears when injected on any page.
+          Notice the real-time probability bar, sentiment badge, AI Market Insight card,
+          and the direct Trade → DreamDEX deep-link button.
+        </p>
+        <div class="ai-feature-row">
+          <span class="ai-pill">📈 Sentiment Analysis</span>
+          <span class="ai-pill">🧠 NLP Matching</span>
+          <span class="ai-pill">✨ AI Insight</span>
+          <span class="ai-pill">⛓ Somnia Live</span>
+          <span class="ai-pill">⚡ &lt;100ms Latency</span>
+        </div>
+      </div>
+      <div class="preview-widget-slot">
+        <odds-lens-overlay id="preview-widget"></odds-lens-overlay>
+      </div>
+    </div>
 
     <!-- Demo Beats Navigation Grid -->
     <section class="demo-grid">
-      <!-- Beat 1: Crypto News Page (Auto-Detect + Manual Selection) -->
+      <!-- Beat 1: Crypto News Page -->
       <div class="demo-card">
-        <div class="card-tag tag-auto">Curated Auto-Detect + Manual</div>
+        <div class="card-tag tag-auto">Auto-Detect + AI Sentiment</div>
         <div class="card-icon">⚡</div>
         <h3>Crypto News Demo Page</h3>
         <p class="card-desc">
@@ -37,14 +167,15 @@
         </p>
         <div class="card-features">
           <span>✓ Auto-detects <strong>SOMI TPS</strong> & <strong>BTC 100k</strong> contracts</span>
-          <span>✓ Select "Bitcoin" or "Somnia" text & right-click for Manual Mode</span>
+          <span>✓ AI detects <strong>📈 BULLISH</strong> sentiment from article text</span>
+          <span>✓ Gemini AI generates one-sentence market insight</span>
         </div>
         <a href="crypto-article.html" class="demo-link-btn">Launch Crypto Article ↗</a>
       </div>
 
-      <!-- Beat 2: Sports Recap Page (Auto-Detect + Manual Selection) -->
+      <!-- Beat 2: Sports Recap Page -->
       <div class="demo-card">
-        <div class="card-tag tag-auto">Curated Auto-Detect + Manual</div>
+        <div class="card-tag tag-auto">Auto-Detect + NLP Override</div>
         <div class="card-icon">⚽</div>
         <h3>Sports Recap Demo Page</h3>
         <p class="card-desc">
@@ -52,14 +183,15 @@
         </p>
         <div class="card-features">
           <span>✓ Auto-detects <strong>UCL Final</strong> odds bar</span>
-          <span>✓ Select "Real Madrid" or "Haaland" to test manual trigger</span>
+          <span>✓ NLP extracts "Haaland", "Vinicius", "Guardiola" entities</span>
+          <span>✓ Shows contextual <strong>📈 BULLISH / 📉 BEARISH</strong> badge</span>
         </div>
         <a href="sports-article.html" class="demo-link-btn">Launch Sports Article ↗</a>
       </div>
 
-      <!-- Beat 3: Macro & Politics Page (Auto-Detect) -->
+      <!-- Beat 3: Macro & Politics Page -->
       <div class="demo-card">
-        <div class="card-tag tag-auto">Curated Auto-Detect + Manual</div>
+        <div class="card-tag tag-auto">Auto-Detect + Bearish Context</div>
         <div class="card-icon">🏛</div>
         <h3>Macro & Rates Demo Page</h3>
         <p class="card-desc">
@@ -67,29 +199,84 @@
         </p>
         <div class="card-features">
           <span>✓ Auto-detects <strong>Fed 50 bps Cut</strong> contract</span>
-          <span>✓ Select "rate cut" or "Jerome Powell" for manual check</span>
+          <span>✓ AI detects <strong>📉 BEARISH</strong> from "uncertainty", "risk" keywords</span>
+          <span>✓ NLP extracts "Jerome Powell", "FOMC", "basis points"</span>
         </div>
         <a href="macro-article.html" class="demo-link-btn">Launch Macro Article ↗</a>
       </div>
 
-      <!-- Beat 4: Options & Extensibility Dashboard -->
+      <!-- Beat 4: AI Features & Options Dashboard -->
       <div class="demo-card highlight">
-        <div class="card-tag tag-eco">Ecosystem Impact Highlight</div>
-        <div class="card-icon">⚙</div>
-        <h3>Options & Custom Mappings</h3>
+        <div class="card-tag tag-eco">AI Engine + Ecosystem Impact</div>
+        <div class="card-icon">✨</div>
+        <h3>AI Configuration & Dashboard</h3>
         <p class="card-desc">
-          Manage event contracts, URL match patterns, and keyword scoring dictionaries. The key extensibility story for
-          ecosystem growth.
+          Configure Gemini AI insights, manage event contract mappings, and test the NLP matcher.
+          The key story for ecosystem extensibility and DreamDEX adoption.
         </p>
         <div class="card-features">
-          <span>✓ Add, edit, or remove live event mappings</span>
+          <span>✓ Set Gemini API key for AI-powered insights</span>
+          <span>✓ Add / edit live event contract mappings</span>
+          <span>✓ Live Matcher Sandbox — test any headline</span>
           <span>✓ Import / Export manifest JSON</span>
-          <span>✓ Live Matcher Sandbox testing</span>
         </div>
         <a href="../options/options.html" target="_blank" class="demo-link-btn primary">Open Options Dashboard ↗</a>
       </div>
     </section>
   </div>
+
+  <!-- Standalone Widget Preview Script -->
+  <script type="module">
+    import '../content/widget.js';
+
+    const PREVIEW_MARKET = {
+      id: 'market-btc-100k',
+      symbol: 'BTC-100K-UP/USDso#YES',
+      title: 'Bitcoin to surpass $100,000 before window expiry',
+      category: 'Crypto',
+      asset: 'BTC',
+      expiry: Math.floor(Date.now() / 1000) + 14400,
+      probability: 0.67,
+      bestBid: 0.66,
+      bestAsk: 0.68,
+      volume24h: 42850,
+      openInterest: 198500,
+      tradeCount: 1420,
+      targetTradeUrl: `https://app.dreamdex.io/events?symbol=${encodeURIComponent('BTC-100K-UP/USDso#YES')}`
+    };
+
+    const PREVIEW_ANALYSIS = {
+      sentiment: {
+        label: 'BULLISH',
+        score: 0.52,
+        intensity: 0.72,
+        topWords: ['surge', 'record', 'momentum', 'milestone']
+      },
+      nlpMatch: {
+        bestMatch: PREVIEW_MARKET,
+        confidence: 0.88,
+        extractedTags: ['btc', 'bitcoin', '100k']
+      }
+    };
+
+    // Simulate AI insight load
+    const PREVIEW_INSIGHT = {
+      text: 'At 67% YES consensus with strong bullish article context, momentum aligns with the contract direction — low risk for YES, contrarian opportunity on NO.',
+      source: 'template'
+    };
+
+    const widget = document.getElementById('preview-widget');
+    if (widget) {
+      // Pre-set insight so it shows immediately (no shimmer needed for hub preview)
+      widget.aiInsight = PREVIEW_INSIGHT;
+      widget.init(PREVIEW_MARKET, {
+        trigger: 'demo-hub',
+        defaultBetAmount: 10,
+        aiAnalysis: PREVIEW_ANALYSIS,
+        headline: 'Bitcoin Surges Toward $100K: Somnia Hits Record Throughput'
+      });
+    }
+  </script>
 </body>
 
 </html>

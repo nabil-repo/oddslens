@@ -47,40 +47,44 @@ To ensure the product is both commercially defensible and 100% dependable on cam
 
 | Hackathon Criterion | Weight | How OddsLens Delivers |
 |---|---|---|
-| **Innovation & Originality** | 20% | **Zero overlap** with existing submissions. Instead of another trading terminal or arbitrage bot, OddsLens builds outward distribution, transforming the entire web into an interactive DreamDEX storefront. |
-| **Technical Implementation** | 25% | Native Manifest V3 service worker, real DreamDEX WebSocket feed (`wss://stg.api.dreamdex.io/v0/ws/public`), Somnia Shannon RPC integration (`50312`), Shadow DOM CSS isolation, and a resilient Brownian-motion volatility streamer. |
-| **UX & Design** | 20% | Cyber dark-mode fintech aesthetic, dual-fill animated odds gauge, orderbook spread readout, real-time expiry countdown, quick bet calculator ($10 &rarr; $14.93 payout), and smooth dragging. |
-| **Business & Ecosystem Impact** | 20% | Directly drives net-new user acquisition and volume to DreamDEX from non-crypto web traffic. Includes an editable **Options Page** where publishers and DAOs can map custom URLs and keywords. |
-| **Presentation & Demo** | 15% | Rock-solid two-beat demo (Manual Mode + Curated Auto-Detect) with built-in realistic demo articles for instant judging reproduction. |
+| **Innovation & Originality** | 20% | **Zero overlap** with existing submissions. Rather than another trading terminal or arbitrage bot, OddsLens builds outward distribution, transforming the entire web into an interactive DreamDEX storefront — enhanced with **client-side NLP entity extraction and Gemini 2.5 Flash trading synthesis**. |
+| **Technical Implementation** | 25% | Native Manifest V3 service worker, real DreamDEX WebSocket feed (`wss://stg.api.dreamdex.io/v0/ws/public`), Somnia Shannon RPC integration (`50312`), **Gemini 2.5 Flash API integration** (`generativelanguage.googleapis.com`), **AFINN-165 Sentiment Engine**, Shadow DOM CSS isolation, and a resilient Brownian-motion volatility streamer. |
+| **UX & Design** | 20% | Cyber dark-mode fintech aesthetic, dual-fill animated odds gauge, orderbook spread readout, **Open Interest (OI) metric**, **Settlement Urgency badge**, **AI Sentiment Pill** (`🟢 BULLISH` / `🔴 BEARISH`), **dynamic AI Insight card with typewriter reveal**, and quick bet calculator. |
+| **Business & Ecosystem Impact** | 20% | Directly drives net-new user acquisition and volume to DreamDEX from non-crypto web traffic. Includes an editable **Options Page** with Gemini API key configuration, publisher wallet attribution, and custom contract mappings. |
+| **Presentation & Demo** | 15% | Rock-solid multi-beat demo (Manual Mode + Curated Auto-Detect + AI Insights) with built-in realistic demo articles and interactive Demo Hub for instant judging reproduction. |
 
 ---
 
-## 4. Technical Architecture
+## 4. Technical Architecture & AI Engine
 
 ```mermaid
 graph TD
     A[Webpage / News Article] -->|Text Selection + Right Click| B(Context Menu: Check DreamDEX Odds)
-    A -->|Page Load URL Match| C(Curated Auto-Detect Engine)
+    A -->|Page Load URL Match + DOM Content| C(Curated Auto-Detect Engine)
     
     B --> D[Manifest V3 Background Service Worker]
     C --> D
     
     D <-->|WebSocket wss://stg.api.dreamdex.io| E[DreamDEX Public CLOB Feed]
-    D <-->|JSON-RPC 50312| F[Somnia Shannon Testnet RPC]
+    D <-->|JSON-RPC 50312 15s Polling| F[Somnia Shannon Testnet RPC]
     D <-->|Brownian Micro-ticks| G[Resilient Simulation Engine]
+    D <-->|Gemini 2.5 Flash / AFINN-165| H[AI Engine: Sentiment & NLP Matcher]
     
-    D -->|chrome.tabs.sendMessage| H[Content Script]
-    H -->|attachShadow| I[OddsLens Shadow DOM Overlay]
+    D -->|chrome.tabs.sendMessage| I[Content Script]
+    I -->|attachShadow| J[OddsLens Shadow DOM Overlay]
     
-    I -->|1-Click Trade Deep Link| J[DreamDEX Event Contracts App]
+    J -->|1-Click Trade Deep Link| K[DreamDEX Event Contracts App]
     
-    K[Options & Mapping Dashboard] -->|chrome.storage.local| D
-    L[Extension Popup Mini-Dashboard] -->|chrome.runtime| D
+    L[Options & AI Config Dashboard] -->|chrome.storage.local| D
+    M[Extension Popup Mini-Dashboard] -->|chrome.runtime| D
 ```
 
 ### Key Technical Highlights:
 - **Zero-Conflict Shadow DOM**: The widget mounts inside an open Shadow Root (`attachShadow({ mode: 'open' })`), guaranteeing that host page CSS resets (Tailwind, Bootstrap, or custom stylesheets on CoinDesk/ESPN) cannot break the widget's layout.
-- **Dual-Feed Reliability**: Real connection to the DreamDEX public WebSocket API with automatic exponential backoff reconnects and heartbeat management. If testnet order books are quiet or undergoing maintenance during a live video recording, a background simulation engine generates micro-ticks so the odds bar always pulses smoothly.
+- **AI-Powered Sentiment & Narrative Analysis**: Built-in `background/ai-engine.js` runs lexical AFINN-165 sentiment scoring directly in the browser, classifying article tone as `BULLISH`, `BEARISH`, or `NEUTRAL` with intensity scores and keyword extraction.
+- **Gemini 2.5 Flash Market Synthesis**: Automatically connects to Google Gemini 2.5 Flash to synthesize how the news narrative impacts contract probability, outputting actionable 2-sentence market insights with smart template fallback if offline.
+- **Dual-Feed Reliability**: Real connection to the DreamDEX public WebSocket API with automatic exponential backoff reconnects and heartbeat management. If testnet order books are quiet during a demo, a Brownian-motion simulation engine keeps odds and spreads alive.
+- **Urgency & Open Interest Indicators**: Real-time resolution countdown highlights expiring windows (<24h yellow, <2h pulsing red), paired with on-chain Open Interest (OI) for market depth visibility.
 - **Zero-Build Extension Runtime**: Built with native ES Modules, requiring zero compilation to load directly into Google Chrome, Brave, or Edge.
 
 ---
@@ -102,7 +106,6 @@ graph TD
 | **MarketsCore** | `0x2802504314685D89bF6C992CA5a8e7cC78bc0294` |
 | **BinarySettlement** | `0xbF4a49e0Dfd092e5FBE8E5761064C49533e6Ed23` |
 | **OutcomeToken6909** | `0xB52c5934113Af5c0Bb20eb3C72290C8215f755b9` |
-| **OracleHub** | `0xe40db387cC98601Dd11bd634fF2f3AD5686dE32b` |
 | **Collateral (tUSDC)** | `0x70a86D8842FB63C4Ad2b7cdddF530eBf1BB25d8E` (6 decimals) |
 
 ---
@@ -111,33 +114,39 @@ graph TD
 
 ```
 oddslens/
-├── manifest.json              # Manifest V3 configuration (permissions, worker, resources)
+├── manifest.json              # Manifest V3 configuration (permissions, host permissions, resources)
 ├── background/
-│   ├── service-worker.js     # Central service worker: context menus, feeds, message router
+│   ├── service-worker.js     # Central service worker: context menus, feeds, block polling, AI router
+│   ├── ai-engine.js          # Gemini 2.5 Flash caller, AFINN-165 sentiment, NLP entity matcher
 │   ├── manifest-data.js      # Default curated markets, network parameters, contract addresses
 │   ├── matching-engine.js    # Regex glob URL matcher & token relevance scoring algorithm
 │   ├── dreamdex-client.js    # DreamDEX WebSocket client with ping/pong and Somnia RPC query
 │   └── mock-streamer.js      # Brownian-motion market volatility engine for fail-safe demos
 ├── content/
-│   ├── content-script.js     # Injected page scanner, auto-detect hook, and widget controller
-│   ├── widget.js             # Shadow-DOM interactive odds widget component
-│   └── widget.css            # Broadcast-grade, sleek cyber-fintech styling
+│   ├── content-script.js     # Injected page scanner, auto-detect hook, article extractor, widget controller
+│   ├── widget.js             # Shadow-DOM interactive odds widget with AI insights, OI & urgency
+│   └── widget.css            # Broadcast-grade, sleek cyber-fintech styling with animations
 ├── popup/
 │   ├── popup.html            # Mini-dashboard interface
 │   ├── popup.js              # State manager, toggle controls, quick match tester
 │   └── popup.css             # Dark-mode popup styling
 ├── options/
-│   ├── options.html          # Custom URL/keyword mapping management dashboard
-│   ├── options.js            # CRUD logic, JSON manifest import/export, matcher sandbox
-│   └── options.css           # Data table and modal styles
+│   ├── options.html          # Custom URL/keyword mapping & Gemini AI configuration dashboard
+│   ├── options.js            # CRUD logic, Gemini API key tester, JSON manifest import/export
+│   └── options.css           # Data table, AI config cards, and modal styles
 ├── demo/
 │   ├── demo-server.js        # Zero-dependency local preview server
-│   ├── index.html            # Interactive Demo Hub & judging walkthrough guide
+│   ├── index.html            # Interactive Demo Hub with live embedded widget & judging guide
 │   ├── crypto-article.html   # Realistic crypto publication article (CoinDesk style)
 │   ├── sports-article.html   # Realistic sports publication article (ESPN style)
 │   ├── macro-article.html    # Realistic macro publication article (WSJ style)
 │   ├── article.css           # Editorial typography and styling
 │   └── demo.css              # Demo Hub presentation styling
+├── docs/
+│   ├── DEMO_VIDEO_GUIDE.md   # Script & screenflow for 2-3 minute judging demo video
+│   ├── DORAHACKS_SUBMISSION.md # Ready-to-submit DoraHacks questionnaire answers
+│   ├── SDK_FEEDBACK_REPORT.md # Professional developer feedback report on DreamDEX APIs/SDKs
+│   └── pitch-deck.html       # Interactive 7-slide presentation deck with keyboard controls
 ├── icons/                    # Crisp extension icons (16x16, 48x48, 128x128, SVG)
 └── README.md                 # Full project documentation
 ```
@@ -148,7 +157,7 @@ oddslens/
 
 ### Step 1: Clone Repository
 ```bash
-git clone https://github.com/your-username/oddslens.git
+git clone https://github.com/nabil-repo/oddslens.git
 cd oddslens
 ```
 
@@ -156,15 +165,14 @@ cd oddslens
 1. Open your Chromium browser and navigate to `chrome://extensions`.
 2. Toggle on **"Developer mode"** in the top-right corner.
 3. Click **"Load unpacked"** in the top-left.
-4. Select the `oddslens` folder.
+4. Select the `oddslens` root folder.
 5. OddsLens is now installed! Pin it to your toolbar.
 
-### Step 3: Run the Local Demo Hub (Optional)
-To test on local HTTP pages:
+### Step 3: Run the Local Demo Hub
 ```bash
 npm start
 ```
-Open **`http://localhost:3000/demo/index.html`** in your browser.
+Open **`http://localhost:3000/demo/index.html`** in your browser to explore the full interactive demo suite and judging hub.
 
 ---
 
@@ -172,20 +180,21 @@ Open **`http://localhost:3000/demo/index.html`** in your browser.
 
 | Timecode | Beat | What to Show & Say |
 |---|---|---|
-| **00:00 – 00:20** | **The Problem** | *"Prediction markets on Somnia are powerful, but right now you only see them if you’re already inside a trading terminal. 99% of sports and news readers never see live odds where they read. OddsLens brings DreamDEX to where the users already are."* |
-| **00:20 – 00:50** | **Manual Mode** | Highlight *"Bitcoin"* on any article &rarr; right-click &rarr; select *"Check DreamDEX odds for this"*. Show the sleek widget pop up with real-time odds (67% UP / 33% DOWN), spread, and countdown timer. |
-| **00:50 – 01:25** | **Curated Auto-Detect** | Visit the Sports or Crypto demo article. Show OddsLens sliding in automatically. Point out the live glowing pulse on odds movement and show the **Quick Bet Calculator** ($10 &rarr; $14.93 payout). |
-| **01:25 – 01:45** | **1-Click Trade Flow** | Click *"Trade on DreamDEX ↗"*. Demonstrate the seamless deep link directly into the testnet DreamDEX Event Contracts interface. |
-| **01:45 – 02:15** | **Extensibility & Ecosystem Impact** | Open the **Options Dashboard**. Demonstrate adding a new custom keyword mapping, exporting JSON, and testing queries in the Matcher Sandbox. |
-| **02:15 – 02:30** | **Closing & Roadmap** | Summarize why distribution is the missing key to prediction market adoption on Somnia. Mention post-hackathon plans for automated NLP detection and publisher revenue sharing. |
+| **00:00 – 00:20** | **The Distribution Problem** | *"Prediction markets on Somnia are powerful, but right now you only see them if you’re already inside a trading terminal. 99% of sports and news readers never see live odds where they read. OddsLens brings DreamDEX to where the users already are."* |
+| **00:20 – 00:45** | **Manual Selection Mode** | Highlight *"Bitcoin"* on any article &rarr; right-click &rarr; select *"Check DreamDEX odds for this"*. Show the sleek widget pop up with real-time odds (67% UP / 33% DOWN), spread, and urgency countdown badge. |
+| **00:45 – 01:20** | **Curated Auto-Detect + AI Insights** | Open the Crypto or Macro demo article. Watch OddsLens slide in automatically: highlight the **`🟢 BULLISH (72%)`** sentiment badge derived from article NLP, followed by the **Gemini 2.5 Flash trading synthesis** comparing news tone against the order book consensus. |
+| **01:20 – 01:45** | **1-Click Trade Flow & Payout Calculator** | Click the `$10` and `$25` quick bet chips to preview expected payout. Click *"Trade on DreamDEX ↗"* to show the deep link directly to the on-chain event contract on Somnia. |
+| **01:45 – 02:15** | **AI Config & Ecosystem Options Dashboard** | Open the **Options Dashboard**. Demonstrate the Gemini API key tester, adding custom keyword/URL mappings, and running live queries through the Matcher Sandbox. |
+| **02:15 – 02:30** | **Closing & Somnia Ecosystem Impact** | Summarize why distribution and AI intelligence are the missing keys to event contract adoption on Somnia. |
 
 ---
 
 ## 9. Post-Hackathon Roadmap
 
-- **Autonomous NLP Entity Extraction**: Transition from keyword and pattern matching to a lightweight client-side ONNX/Transformer model that dynamically detects sports fixtures, ticker symbols, and political races without pre-configuration.
-- **Publisher Monetization & Affiliate Attribution**: Allow bloggers, streamers, and news publishers to embed their Somnia wallet address in the widget to earn a percentage of transaction volume generated through their pages.
-- **Multi-Chain & Cross-Browser Support**: Expand to Firefox (Gecko) and Safari (WebExtension), and support multi-contract tracking across multiple open tabs simultaneously.
+- **Autonomous Multimodal Sentiment**: Expand the AI engine to evaluate article charts, social video transcripts, and audio feeds using Gemini 2.5 Multimodal APIs.
+- **Publisher Monetization & Affiliate Attribution**: Allow bloggers and media organizations to configure their Somnia wallet in Options to earn a continuous royalty on trading volume routed through their publications.
+- **Account Abstraction & 1-Click Inline Trades**: Integrate ERC-4337 smart accounts on Somnia Shannon to allow users to sign and execute DreamDEX transactions directly inside the floating widget without page navigation.
+- **Cross-Browser Store Distribution**: Publish packaged releases to Chrome Web Store, Firefox Add-ons, and Microsoft Edge Add-ons.
 
 ---
 

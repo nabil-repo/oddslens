@@ -503,3 +503,210 @@
   color: var(--up-color);
   font-family: 'SF Mono', Consolas, Monaco, monospace;
 }
+
+/* ── Widget Entry Animation ──────────────────────────────────────────────── */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(120%) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+.oddslens-container.entering {
+  animation: slideInFromRight 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* ── Countdown Urgency Pulse ─────────────────────────────────────────────── */
+@keyframes urgencyPulse {
+  0%, 100% { color: #FF3366; opacity: 1; }
+  50% { color: #FF6688; opacity: 0.6; }
+}
+
+.countdown-timer.urgent {
+  color: #FF3366 !important;
+  animation: urgencyPulse 1.2s ease-in-out infinite;
+}
+
+/* ── Sentiment Badge ─────────────────────────────────────────────────────── */
+.sentiment-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.sentiment-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  padding: 3px 9px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.sentiment-badge.bullish {
+  color: var(--up-color);
+  background: rgba(0, 255, 135, 0.1);
+  border-color: rgba(0, 255, 135, 0.3);
+  box-shadow: 0 0 12px rgba(0, 255, 135, 0.15);
+}
+
+.sentiment-badge.bearish {
+  color: var(--down-color);
+  background: rgba(255, 51, 102, 0.1);
+  border-color: rgba(255, 51, 102, 0.3);
+  box-shadow: 0 0 12px rgba(255, 51, 102, 0.15);
+}
+
+.sentiment-badge.neutral {
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.sentiment-icon {
+  font-size: 11px;
+}
+
+/* Sentiment intensity bar */
+.sentiment-bar {
+  flex: 1;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sentiment-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sentiment-fill.bullish {
+  background: linear-gradient(90deg, var(--up-color), #00F0FF);
+}
+
+.sentiment-fill.bearish {
+  background: linear-gradient(90deg, var(--down-color), #FF0080);
+}
+
+.sentiment-fill.neutral {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Sentiment top words */
+.sentiment-words {
+  font-size: 9.5px;
+  color: var(--text-muted);
+  font-style: italic;
+  margin-top: 2px;
+}
+
+/* ── AI Insight Card ─────────────────────────────────────────────────────── */
+.ai-insight-card {
+  background: linear-gradient(135deg, rgba(121, 40, 202, 0.08) 0%, rgba(0, 240, 255, 0.05) 100%);
+  border: 1px solid rgba(121, 40, 202, 0.25);
+  border-radius: 12px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.ai-card-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #D8B4FE;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.ai-card-icon {
+  font-size: 11px;
+}
+
+.ai-source-badge {
+  margin-left: auto;
+  font-size: 9px;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(121, 40, 202, 0.2);
+  color: #D8B4FE;
+  letter-spacing: 0.3px;
+}
+
+.ai-source-badge.gemini {
+  background: rgba(0, 240, 255, 0.15);
+  color: var(--accent-cyan);
+}
+
+.insight-text {
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* Shimmer loading state */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.insight-shimmer {
+  height: 11px;
+  border-radius: 4px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.04) 0%,
+    rgba(255, 255, 255, 0.10) 50%,
+    rgba(255, 255, 255, 0.04) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+.insight-shimmer:nth-child(2) {
+  width: 70%;
+  margin-top: 5px;
+}
+
+/* ── NLP Match Indicator ─────────────────────────────────────────────────── */
+.nlp-match-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9.5px;
+  color: var(--text-muted);
+  margin-top: -4px;
+}
+
+.nlp-confidence-bar {
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 1px;
+}
+
+.nlp-confidence-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
+  border-radius: 1px;
+  transition: width 0.4s ease;
+}

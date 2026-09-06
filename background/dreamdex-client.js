@@ -4,6 +4,7 @@ export class DreamDexClient {
   constructor(options = {}) {
     this.wsUrl = options.wsUrl || 'wss://stg.api.dreamdex.io/v0/ws/public';
     this.rpcUrl = options.rpcUrl || 'https://api.infra.testnet.somnia.network/';
+    this.dexBaseUrl = options.dexUrl || 'https://app.dreamdex.io';
     this.ws = null;
     this.pingInterval = null;
     this.reconnectTimer = null;
@@ -13,6 +14,7 @@ export class DreamDexClient {
     this.subscriptions = new Set();
     this.onUpdateCallback = null;
     this.onStatusChangeCallback = null;
+    this.onMarketsCallback = null; // Called when live binary markets list is received
   }
 
   setUpdateCallback(fn) {
@@ -21,6 +23,10 @@ export class DreamDexClient {
 
   setStatusChangeCallback(fn) {
     this.onStatusChangeCallback = fn;
+  }
+
+  setMarketsCallback(fn) {
+    this.onMarketsCallback = fn;
   }
 
   updateStatus(newStatus) {
@@ -46,6 +52,9 @@ export class DreamDexClient {
         this.updateStatus('CONNECTED');
         this.reconnectDelay = 2000;
         this.startHeartbeat();
+
+        // Subscribe to live binary markets discovery feed
+        this.subscribeMarkets();
 
         // Resubscribe to existing symbols if reconnecting
         if (this.subscriptions.size > 0) {
@@ -134,9 +143,55 @@ export class DreamDexClient {
     }
   }
 
+  /**
+   * Subscribe to the live binary markets discovery channel.
+   * The DreamDEX WS server broadcasts available markets on connect.
+   */
+  subscribeMarkets() {
+    if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+      // Request all available binary/event contract markets
+      this.ws.send(JSON.stringify({ operation: 'subscribe', channel: 'markets', params: {} }));
+      // Also request ticker feed for all known symbols to get current probabilities
+      this.ws.send(JSON.stringify({ operation: 'subscribe', channel: 'ticker', params: {} }));
+    }
+  }
+
   handleMessage(data) {
     if (data.operation === 'pong') {
       return;
+    }
+
+    // Process live binary markets list (event contracts discovery)
+    if ((data.channel === 'markets' || data.channel === 'event-contracts') && data.data) {
+      const rawMarkets = Array.isArray(data.data) ? data.data : data.data.markets || [];
+      if (rawMarkets.length > 0 && this.onMarketsCallback) {
+        const parsedMarkets = rawMarkets
+          .filter(m => m.kind === 'binary' || m.type === 'binary' || m.symbol?.includes('#'))
+          .map(m => this.parseLiveMarket(m));
+        if (parsedMarkets.length > 0) {
+          this.onMarketsCallback(parsedMarkets);
+        }
+      }
+    }
+
+    // Process ticker updates (price snapshots for all markets)
+    if (data.channel === 'ticker' && data.data) {
+      const tickers = Array.isArray(data.data) ? data.data : [data.data];
+      for (const t of tickers) {
+        if (t.symbol?.includes('#YES') || t.symbol?.includes('#NO')) {
+          if (this.onUpdateCallback) {
+            this.onUpdateCallback({
+              type: 'TICKER_UPDATE',
+              symbol: t.symbol,
+              lastPrice: t.lastPrice ? Number(t.lastPrice) : null,
+              bestBid: t.bestBid ? Number(t.bestBid) : null,
+              bestAsk: t.bestAsk ? Number(t.bestAsk) : null,
+              volume24h: t.volume24h ? Number(t.volume24h) : null,
+              raw: t,
+            });
+          }
+        }
+      }
     }
 
     // Process orderbook snapshots and incremental updates
@@ -157,6 +212,60 @@ export class DreamDexClient {
         });
       }
     }
+  }
+
+  /**
+   * Parse a raw market object from the WS feed into OddsLens market format.
+   */
+  parseLiveMarket(raw) {
+    const symbol = raw.symbol || raw.upSymbol || '';
+    const asset = raw.asset || symbol.split('-')[0] || 'UNKNOWN';
+    const expiry = raw.expiry ? Number(raw.expiry) : Math.floor(Date.now() / 1000) + 14400;
+    const lastPrice = raw.lastPrice ? Number(raw.lastPrice) : 0.5;
+    const probability = lastPrice > 0 && lastPrice < 1 ? lastPrice : 0.5;
+
+    return {
+      id: raw.marketId || raw.id || symbol,
+      symbol,
+      counterSymbol: raw.downSymbol || symbol.replace('#YES', '#NO'),
+      title: raw.question || raw.title || `${asset} Event Contract`,
+      category: raw.category || this.inferCategory(asset),
+      asset,
+      expiry,
+      probability,
+      bestBid: probability - 0.01,
+      bestAsk: probability + 0.01,
+      volume24h: raw.volume24h ? Number(raw.volume24h) : 0,
+      openInterest: raw.openInterest ? Number(raw.openInterest) : 0,
+      tradeCount: raw.tradeCount ? Number(raw.tradeCount) : 0,
+      targetTradeUrl: this.buildTradeUrl(symbol),
+      urlPatterns: [],
+      keywords: this.inferKeywords(asset, raw.question || raw.title || ''),
+      _fromLiveFeed: true,
+    };
+  }
+
+  /**
+   * Build a deep-link URL to the specific market on DreamDEX.
+   */
+  buildTradeUrl(symbol) {
+    if (!symbol) return this.dexBaseUrl;
+    const upSymbol = symbol.includes('#YES') ? symbol : `${symbol}#YES`;
+    return `${this.dexBaseUrl}/events?symbol=${encodeURIComponent(upSymbol)}`;
+  }
+
+  inferCategory(asset) {
+    const a = asset.toUpperCase();
+    if (['BTC', 'ETH', 'SOMI', 'SOL', 'BNB'].includes(a)) return 'Crypto';
+    if (['UCL', 'EPL', 'NFL', 'NBA'].includes(a)) return 'Sports';
+    if (['FED', 'CPI', 'GDP'].includes(a)) return 'Macro';
+    return 'Prediction';
+  }
+
+  inferKeywords(asset, title) {
+    const keywords = [asset.toLowerCase()];
+    const titleWords = title.toLowerCase().split(/\s+/).filter(w => w.length > 3);
+    return [...new Set([...keywords, ...titleWords.slice(0, 5)])];
   }
 
   /**

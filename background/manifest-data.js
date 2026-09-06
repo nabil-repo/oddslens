@@ -75,7 +75,7 @@ export const DEFAULT_MARKETS = [
       'bull run',
       'cryptocurrency'
     ],
-    targetTradeUrl: 'https://app.dreamdex.io'
+    targetTradeUrl: `https://app.dreamdex.io/events?symbol=${encodeURIComponent('BTC-100K-UP/USDso#YES')}`
   },
   {
     id: 'market-somi-tps',
@@ -111,7 +111,7 @@ export const DEFAULT_MARKETS = [
       'high speed',
       'multistream'
     ],
-    targetTradeUrl: 'https://app.dreamdex.io'
+    targetTradeUrl: `https://app.dreamdex.io/events?symbol=${encodeURIComponent('SOMI-TPS-100K/USDso#YES')}`
   },
   {
     id: 'market-ucl-final',
@@ -149,7 +149,7 @@ export const DEFAULT_MARKETS = [
       'etihad',
       'uefa'
     ],
-    targetTradeUrl: 'https://app.dreamdex.io'
+    targetTradeUrl: `https://app.dreamdex.io/events?symbol=${encodeURIComponent('UCL-FINAL-RMA/USDso#YES')}`
   },
   {
     id: 'market-fed-rates',
@@ -197,5 +197,7 @@ export const DEFAULT_SETTINGS = {
   soundEffects: true,
   tickAnimation: true,
   defaultBetAmount: 10,
-  minMatchConfidence: 0.25
+  minMatchConfidence: 0.25,
+  geminiApiKey: '', // Gemini API key for AI-powered insights (user-provided)
+  aiEnabled: true, // Enable/disable AI analysis features
 };

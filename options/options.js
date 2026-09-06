@@ -341,6 +341,116 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (e.key === 'Enter') runSandbox();
   });
 
+  // ─── AI Configuration ──────────────────────────────────────────────────────
+
+  const geminiKeyInput = document.getElementById('gemini-api-key');
+  const btnToggleKeyVisibility = document.getElementById('btn-toggle-key-visibility');
+  const btnTestAiInsight = document.getElementById('btn-test-ai-insight');
+  const aiTestResult = document.getElementById('ai-test-result');
+  const aiTestTitle = document.getElementById('ai-test-title');
+  const aiTestSource = document.getElementById('ai-test-source');
+  const aiTestText = document.getElementById('ai-test-text');
+  const aiGeminiStatus = document.getElementById('ai-gemini-status');
+  const toggleAi = document.getElementById('toggle-ai');
+
+  // Load saved Gemini API key and AI settings
+  async function loadAiSettings() {
+    if (isExtensionRuntime) {
+      const data = await new Promise(resolve => chrome.storage.local.get(['settings'], resolve));
+      const s = data.settings || {};
+      if (s.geminiApiKey) {
+        geminiKeyInput.value = s.geminiApiKey;
+        aiGeminiStatus.textContent = 'Key configured ✓';
+        aiGeminiStatus.className = 'stat-value text-green';
+      }
+      if (typeof s.aiEnabled === 'boolean') {
+        toggleAi.checked = s.aiEnabled;
+      }
+    }
+  }
+
+  // Save Gemini key on input (debounced)
+  let saveKeyTimer = null;
+  geminiKeyInput?.addEventListener('input', () => {
+    clearTimeout(saveKeyTimer);
+    saveKeyTimer = setTimeout(() => {
+      const key = geminiKeyInput.value.trim();
+      if (isExtensionRuntime) {
+        chrome.runtime.sendMessage({
+          type: 'UPDATE_SETTINGS',
+          payload: { geminiApiKey: key }
+        });
+      }
+      if (key.length > 10) {
+        aiGeminiStatus.textContent = 'Key configured ✓';
+        aiGeminiStatus.className = 'stat-value text-green';
+      } else {
+        aiGeminiStatus.textContent = 'No key set';
+        aiGeminiStatus.className = 'stat-value';
+      }
+    }, 800);
+  });
+
+  // Toggle AI features
+  toggleAi?.addEventListener('change', () => {
+    if (isExtensionRuntime) {
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_SETTINGS',
+        payload: { aiEnabled: toggleAi.checked }
+      });
+    }
+    showToast(toggleAi.checked ? 'AI analysis enabled' : 'AI analysis disabled');
+  });
+
+  // Show/hide key
+  btnToggleKeyVisibility?.addEventListener('click', () => {
+    geminiKeyInput.type = geminiKeyInput.type === 'password' ? 'text' : 'password';
+  });
+
+  // Test AI Insight button
+  btnTestAiInsight?.addEventListener('click', async () => {
+    const key = geminiKeyInput.value.trim();
+    const testMarket = markets[0];
+    if (!testMarket) { showToast('No markets loaded'); return; }
+
+    btnTestAiInsight.textContent = 'Testing...';
+    btnTestAiInsight.disabled = true;
+
+    if (isExtensionRuntime) {
+      chrome.runtime.sendMessage({
+        type: 'GET_AI_INSIGHT',
+        payload: {
+          market: testMarket,
+          sentiment: { label: 'BULLISH', score: 0.45, intensity: 0.6, topWords: ['surge', 'record', 'momentum'] },
+          headline: 'Bitcoin surges to new highs amid strong institutional demand'
+        }
+      }, (response) => {
+        btnTestAiInsight.textContent = 'Test Insight';
+        btnTestAiInsight.disabled = false;
+        if (response?.success && response.insight) {
+          aiTestResult.classList.remove('hidden');
+          aiTestTitle.textContent = testMarket.title.slice(0, 40) + '...';
+          aiTestSource.textContent = response.insight.source === 'gemini' ? '✨ Gemini AI' : '📊 AI Template';
+          aiTestSource.style.color = response.insight.source === 'gemini' ? '#00F0FF' : '#00FF87';
+          aiTestText.textContent = response.insight.text;
+        }
+      });
+    } else {
+      // Standalone preview
+      setTimeout(() => {
+        btnTestAiInsight.textContent = 'Test Insight';
+        btnTestAiInsight.disabled = false;
+        aiTestResult.classList.remove('hidden');
+        aiTestTitle.textContent = testMarket.title.slice(0, 40) + '...';
+        aiTestSource.textContent = '📊 AI Template (Extension required for Gemini)';
+        aiTestSource.style.color = '#00FF87';
+        aiTestText.textContent = `At ${Math.round((testMarket.probability || 0.5) * 100)}% probability, this market shows strong YES momentum — aligned with BULLISH article context.`;
+      }, 600);
+    }
+  });
+
+  await loadAiSettings();
+
   // Initial load
   await loadState();
 });
