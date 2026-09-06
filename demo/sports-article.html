@@ -89,7 +89,20 @@
         widget.init(uclMarket, {
           trigger: 'demo-curated',
           soundEffects: true,
-          candidates: DEFAULT_MARKETS
+          candidates: DEFAULT_MARKETS,
+          headline: document.title,
+          aiAnalysis: {
+            sentiment: {
+              label: 'NEUTRAL',
+              score: 0.08,
+              intensity: 0.54,
+              topWords: ['clash', 'rivalry', 'split', 'advantage']
+            },
+            nlpMatch: {
+              confidence: 0.88,
+              extractedTags: ['real madrid', 'manchester city', 'ucl']
+            }
+          }
         });
 
         document.addEventListener('mouseup', () => {

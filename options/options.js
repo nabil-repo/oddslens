@@ -366,6 +366,17 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (typeof s.aiEnabled === 'boolean') {
         toggleAi.checked = s.aiEnabled;
       }
+    } else {
+      const savedKey = localStorage.getItem('oddslens_gemini_key');
+      if (savedKey) {
+        geminiKeyInput.value = savedKey;
+        aiGeminiStatus.textContent = 'Key configured (Local) ✓';
+        aiGeminiStatus.className = 'stat-value text-green';
+      }
+      const savedAi = localStorage.getItem('oddslens_ai_enabled');
+      if (savedAi !== null) {
+        toggleAi.checked = savedAi === 'true';
+      }
     }
   }
 
@@ -380,6 +391,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           type: 'UPDATE_SETTINGS',
           payload: { geminiApiKey: key }
         });
+      } else {
+        localStorage.setItem('oddslens_gemini_key', key);
       }
       if (key.length > 10) {
         aiGeminiStatus.textContent = 'Key configured ✓';
@@ -398,6 +411,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         type: 'UPDATE_SETTINGS',
         payload: { aiEnabled: toggleAi.checked }
       });
+    } else {
+      localStorage.setItem('oddslens_ai_enabled', toggleAi.checked);
     }
     showToast(toggleAi.checked ? 'AI analysis enabled' : 'AI analysis disabled');
   });

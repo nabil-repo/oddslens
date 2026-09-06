@@ -89,7 +89,20 @@
         widget.init(fedMarket, {
           trigger: 'demo-curated',
           soundEffects: true,
-          candidates: DEFAULT_MARKETS
+          candidates: DEFAULT_MARKETS,
+          headline: document.title,
+          aiAnalysis: {
+            sentiment: {
+              label: 'BEARISH',
+              score: -0.42,
+              intensity: 0.68,
+              topWords: ['uncertainty', 'risk', 'inflation', 'slowdown']
+            },
+            nlpMatch: {
+              confidence: 0.85,
+              extractedTags: ['federal reserve', 'rate cut', 'fomc']
+            }
+          }
         });
 
         document.addEventListener('mouseup', () => {
