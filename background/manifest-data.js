@@ -48,13 +48,6 @@ export const DEFAULT_MARKETS = [
     asset: 'BTC',
     windowLabel: '24h Window',
     // Expiry dynamically set in seconds
-    expiryOffsetSec: 14400, // 4 hours
-    probability: 0.67,
-    bestBid: 0.66,
-    bestAsk: 0.68,
-    volume24h: 42850,
-    openInterest: 198500,
-    tradeCount: 1420,
     urlPatterns: [
       '*://*coindesk.com/*',
       '*://*cointelegraph.com/*',
@@ -85,13 +78,6 @@ export const DEFAULT_MARKETS = [
     category: 'Ecosystem',
     asset: 'SOMI',
     windowLabel: 'Testnet Epoch',
-    expiryOffsetSec: 28800, // 8 hours
-    probability: 0.82,
-    bestBid: 0.81,
-    bestAsk: 0.83,
-    volume24h: 118400,
-    openInterest: 340000,
-    tradeCount: 3890,
     urlPatterns: [
       '*://*somnia.network/*',
       '*://*dorahacks.io/*',
@@ -121,13 +107,6 @@ export const DEFAULT_MARKETS = [
     category: 'Sports',
     asset: 'UCL',
     windowLabel: 'Match Day',
-    expiryOffsetSec: 7200, // 2 hours
-    probability: 0.54,
-    bestBid: 0.53,
-    bestAsk: 0.55,
-    volume24h: 89400,
-    openInterest: 260000,
-    tradeCount: 2750,
     urlPatterns: [
       '*://*espn.com/*',
       '*://*skysports.com/*',
@@ -158,14 +137,8 @@ export const DEFAULT_MARKETS = [
     title: 'Federal Reserve to cut rates by 50 bps at upcoming FOMC',
     category: 'Macro',
     asset: 'FED',
+    direction: 'cut',
     windowLabel: 'FOMC Window',
-    expiryOffsetSec: 54000, // 15 hours
-    probability: 0.38,
-    bestBid: 0.37,
-    bestAsk: 0.39,
-    volume24h: 63100,
-    openInterest: 185000,
-    tradeCount: 1910,
     urlPatterns: [
       '*://*wsj.com/*',
       '*://*reuters.com/*',
@@ -192,7 +165,7 @@ export const DEFAULT_MARKETS = [
 
 export const DEFAULT_SETTINGS = {
   network: 'testnet', // 'testnet' | 'mainnet' | 'simulation'
-  simulationMode: true, // Guarantees live ticks during judging demo
+  simulationMode: false, // Use DreamDEX live feed by default
   autoDetectEnabled: true,
   soundEffects: true,
   tickAnimation: true,
@@ -200,6 +173,6 @@ export const DEFAULT_SETTINGS = {
   minMatchConfidence: 0.25,
   geminiApiKey: '', // Gemini or OpenRouter API key
   aiProvider: 'auto', // 'auto' | 'openrouter' | 'gemini'
-  openRouterModel: 'google/gemini-2.0-flash-001',
+  openRouterModel: 'openrouter/free',
   aiEnabled: true, // Enable/disable AI analysis features
 };

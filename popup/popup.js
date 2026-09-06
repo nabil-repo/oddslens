@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   const networkBadgeEl = document.getElementById('network-badge');
   const blockNumberEl = document.getElementById('block-number');
   const toggleAutoDetect = document.getElementById('toggle-autodetect');
-  const toggleSimulation = document.getElementById('toggle-simulation');
   const toggleAudio = document.getElementById('toggle-audio');
   const marketsListEl = document.getElementById('markets-list');
   const marketCountEl = document.getElementById('market-count');
@@ -62,10 +61,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // Update WS Status
-    const isConnected = res.wsStatus === 'CONNECTED' || currentSettings.simulationMode;
+    const isConnected = res.wsStatus === 'CONNECTED';
     if (isConnected) {
       wsStatusEl.className = 'status-pill';
-      wsStatusEl.querySelector('.status-text').textContent = currentSettings.simulationMode ? 'Simulating' : 'Connected';
+      wsStatusEl.querySelector('.status-text').textContent = 'Connected';
     } else {
       wsStatusEl.className = 'status-pill disconnected';
       wsStatusEl.querySelector('.status-text').textContent = 'Offline';
@@ -73,7 +72,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Sync Toggles
     toggleAutoDetect.checked = !!currentSettings.autoDetectEnabled;
-    toggleSimulation.checked = !!currentSettings.simulationMode;
     toggleAudio.checked = !!currentSettings.soundEffects;
 
     // Render Markets
@@ -85,7 +83,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     marketsListEl.innerHTML = '';
 
     markets.forEach(m => {
-      const prob = m.probability || 0.5;
+      const hasLiveData = m.liveData === true && Number.isFinite(m.probability);
+      const prob = hasLiveData ? m.probability : 0;
       const upPercent = Math.round(prob * 100);
       const downPercent = 100 - upPercent;
 
@@ -95,11 +94,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       row.innerHTML = `
         <div class="market-row-top">
           <span class="market-asset">${m.asset} • ${m.title.slice(0, 28)}...</span>
-          <span class="market-prob" id="prob-${m.id}">${upPercent}% UP</span>
+          <span class="market-prob" id="prob-${m.id}">${hasLiveData ? `${upPercent}% UP` : 'Awaiting live data'}</span>
         </div>
         <div class="mini-bar-track">
-          <div class="mini-bar-up" id="bar-up-${m.id}" style="width: ${upPercent}%;"></div>
-          <div class="mini-bar-down" id="bar-down-${m.id}" style="width: ${downPercent}%;"></div>
+          <div class="mini-bar-up" id="bar-up-${m.id}" style="width: ${hasLiveData ? `${upPercent}%` : '0%'};"></div>
+          <div class="mini-bar-down" id="bar-down-${m.id}" style="width: ${hasLiveData ? `${downPercent}%` : '0%'};"></div>
         </div>
       `;
 
@@ -119,19 +118,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         type: 'UPDATE_SETTINGS',
         payload: { autoDetectEnabled: toggleAutoDetect.checked }
       });
-    }
-  });
-
-  toggleSimulation.addEventListener('change', () => {
-    if (isExtensionRuntime) {
-      chrome.runtime.sendMessage({
-        type: 'UPDATE_SETTINGS',
-        payload: { simulationMode: toggleSimulation.checked }
-      });
-      loadState();
-    } else {
-      currentSettings.simulationMode = toggleSimulation.checked;
-      loadState();
     }
   });
 
@@ -252,15 +238,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       }
     });
   } else {
-    // Standalone tick simulator
-    setInterval(() => {
-      if (currentMarkets.length > 0) {
-        const m = currentMarkets[Math.floor(Math.random() * currentMarkets.length)];
-        const delta = (Math.random() - 0.48) * 0.02;
-        m.probability = Math.max(0.1, Math.min(0.9, Math.round((m.probability + delta) * 1000) / 1000));
-        updateMarketRow({ marketId: m.id, probability: m.probability });
-      }
-    }, 2800);
+    // Standalone preview has no live DreamDEX connection.
   }
 
   function updateMarketRow({ marketId, probability }) {

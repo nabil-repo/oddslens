@@ -109,6 +109,10 @@ export function extractEntities(text, markets) {
     const normAsset = market.asset?.toLowerCase() || '';
     const keywords = (market.keywords || []).map(k => k.toLowerCase());
 
+    if (market.direction === 'cut' && /\brate\s+hike\b|\brate\s+increase\b|\braise\s+rates?\b/i.test(normalizedText)) {
+      return { market, score: -Infinity, confidence: 0, hits: ['opposite-direction'] };
+    }
+
     // Tag overlap with market keywords
     for (const tag of tagArray) {
       if (keywords.includes(tag)) {
@@ -290,9 +294,9 @@ export function detectAiProvider(apiKey, explicitProvider = 'auto') {
 
 /**
  * Call the OpenRouter API to generate a 1-sentence market insight.
- * Supports any OpenRouter model (default: google/gemini-2.0-flash-001).
+ * Supports any OpenRouter model (default: openrouter/free).
  */
-export async function callOpenRouterInsight(market, sentiment, headline, apiKey, model = 'google/gemini-2.0-flash-001') {
+export async function callOpenRouterInsight(market, sentiment, headline, apiKey, model = 'openrouter/free') {
   const prob = market.probability || 0.5;
   const upPct = Math.round(prob * 100);
 
@@ -320,7 +324,7 @@ export async function callOpenRouterInsight(market, sentiment, headline, apiKey,
       },
       signal: controller.signal,
       body: JSON.stringify({
-        model: model || 'google/gemini-2.0-flash-001',
+        model: model || 'openrouter/free',
         messages: [
           {
             role: 'system',
@@ -339,7 +343,8 @@ export async function callOpenRouterInsight(market, sentiment, headline, apiKey,
     clearTimeout(timeoutId);
 
     if (!response.ok) {
-      console.warn('[OddsLens AI] OpenRouter API error:', response.status);
+      const errorBody = await response.text().catch(() => '');
+      console.warn('[OddsLens AI] OpenRouter API error:', response.status, errorBody.slice(0, 240));
       return null;
     }
 

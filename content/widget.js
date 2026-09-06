@@ -79,8 +79,10 @@
         return;
       }
 
+      const wasLive = this.market.liveData === true;
       const prevProb = this.market.probability;
       this.market.probability = tickData.probability;
+      this.market.liveData = true;
       if (tickData.bestBid !== undefined) this.market.bestBid = tickData.bestBid;
       if (tickData.bestAsk !== undefined) this.market.bestAsk = tickData.bestAsk;
       if (tickData.volume24h !== undefined) this.market.volume24h = tickData.volume24h;
@@ -102,6 +104,11 @@
       // Play subtle audio chime if enabled
       if (this.meta.soundEffects) {
         this.playTickAudio(tickData.probability >= prevProb);
+      }
+
+      if (!wasLive || !container) {
+        this.render();
+        return;
       }
 
       this.updateDynamicValues();
@@ -181,6 +188,27 @@
       const cssUrl = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL)
         ? chrome.runtime.getURL('content/widget.css')
         : (window.location.pathname.includes('/demo/') ? '../content/widget.css' : '/content/widget.css');
+
+      if (this.market.liveData !== true) {
+        this.shadowRoot.innerHTML = `
+          <link rel="stylesheet" href="${cssUrl}">
+          <div class="oddslens-container" role="dialog" aria-label="DreamDEX Odds Widget">
+            <div class="oddslens-header">
+              <div class="brand-left"><span class="brand-badge">ODDSLENS</span><span class="network-tag">Somnia L1</span></div>
+              <button class="icon-btn btn-close" title="Close widget">×</button>
+            </div>
+            <div class="oddslens-body">
+              <div class="event-meta"><span class="category-pill">${this.market.category || 'Prediction'}</span></div>
+              <h3>${this.market.title || 'Event contract'}</h3>
+              <p class="live-data-pending">Waiting for live DreamDEX data...</p>
+            </div>
+          </div>
+        `;
+        this.shadowRoot.querySelector('.btn-close')?.addEventListener('click', () => {
+          this.style.display = 'none';
+        });
+        return;
+      }
 
       if (this.isMinimized) {
         this.shadowRoot.innerHTML = `

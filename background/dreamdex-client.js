@@ -15,6 +15,7 @@ export class DreamDexClient {
     this.onUpdateCallback = null;
     this.onStatusChangeCallback = null;
     this.onMarketsCallback = null; // Called when live binary markets list is received
+    this.seenChannels = new Set();
   }
 
   setUpdateCallback(fn) {
@@ -157,6 +158,11 @@ export class DreamDexClient {
   }
 
   handleMessage(data) {
+    if (data.channel && !this.seenChannels.has(data.channel)) {
+      this.seenChannels.add(data.channel);
+      console.log(`[DreamDexClient] Received channel: ${data.channel}`);
+    }
+
     if (data.operation === 'pong') {
       return;
     }
@@ -183,10 +189,10 @@ export class DreamDexClient {
             this.onUpdateCallback({
               type: 'TICKER_UPDATE',
               symbol: t.symbol,
-              lastPrice: t.lastPrice ? Number(t.lastPrice) : null,
-              bestBid: t.bestBid ? Number(t.bestBid) : null,
-              bestAsk: t.bestAsk ? Number(t.bestAsk) : null,
-              volume24h: t.volume24h ? Number(t.volume24h) : null,
+              lastPrice: t.lastPrice !== undefined ? Number(t.lastPrice) : null,
+              bestBid: t.bestBid !== undefined ? Number(t.bestBid) : null,
+              bestAsk: t.bestAsk !== undefined ? Number(t.bestAsk) : null,
+              volume24h: t.volume24h !== undefined ? Number(t.volume24h) : null,
               raw: t,
             });
           }
@@ -221,8 +227,8 @@ export class DreamDexClient {
     const symbol = raw.symbol || raw.upSymbol || '';
     const asset = raw.asset || symbol.split('-')[0] || 'UNKNOWN';
     const expiry = raw.expiry ? Number(raw.expiry) : Math.floor(Date.now() / 1000) + 14400;
-    const lastPrice = raw.lastPrice ? Number(raw.lastPrice) : 0.5;
-    const probability = lastPrice > 0 && lastPrice < 1 ? lastPrice : 0.5;
+    const lastPrice = raw.lastPrice !== undefined ? Number(raw.lastPrice) : null;
+    const probability = Number.isFinite(lastPrice) && lastPrice > 0 && lastPrice < 1 ? lastPrice : null;
 
     return {
       id: raw.marketId || raw.id || symbol,
@@ -233,14 +239,15 @@ export class DreamDexClient {
       asset,
       expiry,
       probability,
-      bestBid: probability - 0.01,
-      bestAsk: probability + 0.01,
-      volume24h: raw.volume24h ? Number(raw.volume24h) : 0,
-      openInterest: raw.openInterest ? Number(raw.openInterest) : 0,
-      tradeCount: raw.tradeCount ? Number(raw.tradeCount) : 0,
+      bestBid: null,
+      bestAsk: null,
+      volume24h: raw.volume24h !== undefined ? Number(raw.volume24h) : null,
+      openInterest: raw.openInterest !== undefined ? Number(raw.openInterest) : null,
+      tradeCount: raw.tradeCount !== undefined ? Number(raw.tradeCount) : null,
       targetTradeUrl: this.buildTradeUrl(symbol),
       urlPatterns: [],
       keywords: this.inferKeywords(asset, raw.question || raw.title || ''),
+      liveData: false,
       _fromLiveFeed: true,
     };
   }

@@ -123,19 +123,6 @@
           }
         });
 
-        setInterval(() => {
-          if (window.__ODDSLENS_INJECTED__) return;
-          if (widget.market) {
-            const delta = (Math.random() - 0.49) * 0.02;
-            const newProb = Math.max(0.1, Math.min(0.9, Math.round((widget.market.probability + delta) * 1000) / 1000));
-            widget.updateOdds({
-              marketId: widget.market.id,
-              probability: newProb,
-              bestBid: Math.round((newProb - 0.01) * 1000) / 1000,
-              bestAsk: Math.round((newProb + 0.01) * 1000) / 1000
-            });
-          }
-        }, 3400);
       }
     }, 800);
   </script>

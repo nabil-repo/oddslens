@@ -76,8 +76,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     // WS Status
-    const isConnected = res.wsStatus === 'CONNECTED' || settings.simulationMode;
-    optWsStatus.textContent = isConnected ? (settings.simulationMode ? 'Simulating (Active)' : 'Connected') : 'Disconnected';
+    const isConnected = res.wsStatus === 'CONNECTED';
+    optWsStatus.textContent = isConnected ? 'Connected' : 'Disconnected';
     optWsStatus.className = isConnected ? 'stat-value text-green' : 'stat-value';
 
     renderTable();
@@ -136,8 +136,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       chrome.runtime.sendMessage({
         type: 'UPDATE_SETTINGS',
         payload: {
-          network: net,
-          simulationMode: net === 'simulation' || settings.simulationMode
+          network: net
         }
       }, () => {
         showToast(`Network switched to ${net}`);

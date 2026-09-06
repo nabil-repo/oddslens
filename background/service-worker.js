@@ -3,13 +3,11 @@
 import { DEFAULT_MARKETS, DEFAULT_SETTINGS, SOMNIA_NETWORKS } from './manifest-data.js';
 import { matchUrl, matchText } from './matching-engine.js';
 import { DreamDexClient } from './dreamdex-client.js';
-import { MockStreamer } from './mock-streamer.js';
 import { analyzeArticle, callAiInsight, callGeminiInsight, generateInsightTemplate } from './ai-engine.js';
 
 let markets = [];
 let settings = { ...DEFAULT_SETTINGS };
 let dreamDexClient = null;
-let mockStreamer = null;
 let lastSomniaBlock = null;
 let blockPollInterval = null;
 // Cache: marketId+probBucket → { text, source, ts }
@@ -77,22 +75,31 @@ function getMarketTradeUrl(m) {
   return 'https://app.dreamdex.io/event-contracts';
 }
 
+function markAsLivePending(market) {
+  return {
+    ...market,
+    probability: null,
+    bestBid: null,
+    bestAsk: null,
+    volume24h: null,
+    openInterest: null,
+    tradeCount: null,
+    expiry: null,
+    liveData: false,
+    targetTradeUrl: getMarketTradeUrl(market)
+  };
+}
+
 // Initialize persistent storage
 async function initStorage() {
   const data = await chrome.storage.local.get(['markets', 'settings']);
 
   if (!data.markets || !Array.isArray(data.markets) || data.markets.length === 0) {
-    markets = DEFAULT_MARKETS.map(m => {
-      const expiry = Math.floor(Date.now() / 1000) + (m.expiryOffsetSec || 14400);
-      return { ...m, expiry, targetTradeUrl: getMarketTradeUrl(m) };
-    });
+    markets = DEFAULT_MARKETS.map(markAsLivePending);
     await chrome.storage.local.set({ markets });
   } else {
     // Sanitize any existing cached markets that may have the obsolete /events?symbol= 404 URL
-    markets = data.markets.map(m => ({
-      ...m,
-      targetTradeUrl: getMarketTradeUrl(m)
-    }));
+    markets = data.markets.map(m => m._fromLiveFeed ? m : markAsLivePending(m));
     await chrome.storage.local.set({ markets });
   }
 
@@ -100,13 +107,17 @@ async function initStorage() {
     settings = { ...DEFAULT_SETTINGS };
     await chrome.storage.local.set({ settings });
   } else {
-    settings = { ...DEFAULT_SETTINGS, ...data.settings };
+    settings = { ...DEFAULT_SETTINGS, ...data.settings, simulationMode: false };
+    if (settings.openRouterModel === 'google/gemini-2.0-flash-001' || settings.openRouterModel === 'google/gemini-2.5-flash') {
+      settings.openRouterModel = DEFAULT_SETTINGS.openRouterModel;
+    }
+    await chrome.storage.local.set({ settings });
   }
 
-  console.log('[OddsLens] Loaded', markets.length, 'markets. Simulation mode:', settings.simulationMode);
+  console.log('[OddsLens] Loaded', markets.length, 'markets. Live data mode enabled.');
 }
 
-// Setup real WebSocket client and simulation engine
+// Setup the real DreamDEX WebSocket client and Somnia RPC polling.
 function setupFeeds() {
   const currentNetwork = SOMNIA_NETWORKS[settings.network] || SOMNIA_NETWORKS.testnet;
 
@@ -132,27 +143,9 @@ function setupFeeds() {
     });
   }
 
-  // Connect to DreamDEX if network isn't pure simulation
-  if (settings.network !== 'simulation') {
-    dreamDexClient.connect();
-    const symbols = markets.map(m => m.symbol).filter(Boolean);
-    dreamDexClient.subscribe(symbols);
-  }
-
-  // Resilient Simulation engine
-  if (!mockStreamer) {
-    mockStreamer = new MockStreamer();
-    mockStreamer.setMarkets(markets);
-    mockStreamer.setTickCallback((tick) => {
-      handleTickUpdate(tick);
-    });
-  }
-
-  if (settings.simulationMode) {
-    mockStreamer.start();
-  } else {
-    mockStreamer.stop();
-  }
+  dreamDexClient.connect();
+  const symbols = markets.map(m => m.symbol).filter(Boolean);
+  dreamDexClient.subscribe(symbols);
 
   // Poll Somnia Shannon block number every 15 seconds
   startBlockPolling();
@@ -196,7 +189,6 @@ function handleLiveMarketsUpdate(liveMarkets) {
   if (newMarkets.length > 0) {
     markets = [...markets, ...newMarkets];
     chrome.storage.local.set({ markets });
-    if (mockStreamer) mockStreamer.setMarkets(markets);
     broadcastToTabs({ type: 'MARKETS_CHANGED', markets });
     console.log(`[OddsLens] Added ${newMarkets.length} new live markets. Total: ${markets.length}`);
   }
@@ -218,11 +210,23 @@ function handleRealFeedUpdate(update) {
 
   if (!targetMarket) return;
 
+  const hasLastPrice = Number.isFinite(update.lastPrice);
+  const hasOrderbook = Number.isFinite(update.bestBid) && Number.isFinite(update.bestAsk);
+  if (!hasLastPrice && !hasOrderbook) return;
+
+  targetMarket.liveData = true;
+
   if (update.bestBid !== null && update.bestBid !== undefined) {
     targetMarket.bestBid = update.bestBid;
   }
   if (update.bestAsk !== null && update.bestAsk !== undefined) {
     targetMarket.bestAsk = update.bestAsk;
+  }
+  if (update.lastPrice !== null && update.lastPrice !== undefined) {
+    targetMarket.probability = update.lastPrice;
+  }
+  if (update.volume24h !== null && update.volume24h !== undefined) {
+    targetMarket.volume24h = update.volume24h;
   }
   if (targetMarket.bestBid && targetMarket.bestAsk) {
     targetMarket.probability = Math.round(((targetMarket.bestBid + targetMarket.bestAsk) / 2) * 1000) / 1000;
@@ -240,33 +244,6 @@ function handleRealFeedUpdate(update) {
       tradeCount: targetMarket.tradeCount,
       tickDirection: 'LIVE',
       source: 'dreamdex-ws'
-    }
-  });
-}
-
-function handleTickUpdate(tick) {
-  const market = markets.find(m => m.id === tick.marketId);
-  if (market) {
-    market.probability = tick.probability;
-    market.bestBid = tick.bestBid;
-    market.bestAsk = tick.bestAsk;
-    market.volume24h = tick.volume24h;
-    market.tradeCount = tick.tradeCount;
-  }
-
-  broadcastToTabs({
-    type: 'ODDS_UPDATE',
-    payload: {
-      marketId: tick.marketId,
-      symbol: tick.symbol,
-      probability: tick.probability,
-      bestBid: tick.bestBid,
-      bestAsk: tick.bestAsk,
-      volume24h: tick.volume24h,
-      tradeCount: tick.tradeCount,
-      tickDirection: tick.tickDirection,
-      change: tick.change,
-      source: 'simulation'
     }
   });
 }
@@ -444,16 +421,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
 
       case 'UPDATE_SETTINGS': {
-        settings = { ...settings, ...payload };
+        settings = { ...settings, ...payload, simulationMode: false };
         chrome.storage.local.set({ settings });
-
-        if (mockStreamer) {
-          if (settings.simulationMode) {
-            mockStreamer.start();
-          } else {
-            mockStreamer.stop();
-          }
-        }
 
         broadcastToTabs({ type: 'SETTINGS_CHANGED', settings });
         sendResponse({ success: true, settings });
@@ -463,37 +432,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       case 'SAVE_MARKETS': {
         markets = payload.markets;
         chrome.storage.local.set({ markets });
-        if (mockStreamer) {
-          mockStreamer.setMarkets(markets);
-        }
         broadcastToTabs({ type: 'MARKETS_CHANGED', markets });
         sendResponse({ success: true, count: markets.length });
         return true;
       }
 
       case 'RESET_DEFAULTS': {
-        markets = DEFAULT_MARKETS.map(m => {
-          const expiry = Math.floor(Date.now() / 1000) + (m.expiryOffsetSec || 14400);
-          return { ...m, expiry, targetTradeUrl: getMarketTradeUrl(m) };
-        });
+        markets = DEFAULT_MARKETS.map(markAsLivePending);
         settings = { ...DEFAULT_SETTINGS };
         chrome.storage.local.set({ markets, settings });
-        if (mockStreamer) {
-          mockStreamer.setMarkets(markets);
-          mockStreamer.start();
-        }
         insightCache.clear();
         broadcastToTabs({ type: 'STATE_RESET', markets, settings });
         sendResponse({ success: true });
         return true;
-      }
-
-      case 'FORCE_TICK': {
-        if (mockStreamer) {
-          mockStreamer.forceTick(payload.marketId);
-        }
-        sendResponse({ success: true });
-        break;
       }
 
       default:

@@ -134,6 +134,10 @@
     // Asynchronously run NLP entity refinement in background without blocking display
     analyzeCurrentPage().then((analysis) => {
       if (!analysis) return;
+      if (meta.trigger === 'auto-detect' && !analysis.nlpMatch?.bestMatch) {
+        activeWidget.style.display = 'none';
+        return;
+      }
       if (analysis.nlpMatch?.bestMatch && analysis.nlpMatch.confidence > 0.4 && meta.trigger === 'auto-detect') {
         const nlpBest = analysis.nlpMatch.bestMatch;
         if (nlpBest.id !== market.id && activeWidget.init) {
