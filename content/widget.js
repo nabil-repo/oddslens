@@ -10,7 +10,8 @@ const ICONS = {
   EXTERNAL_LINK: `<svg class="btn-arrow-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>`
 };
 
-export class OddsLensWidget extends HTMLElement {
+// Plain class definition (compatible with both Chrome classic content scripts and ES module imports)
+class OddsLensWidget extends HTMLElement {
   constructor() {
     super();
     this.attachShadow({ mode: 'open' });
@@ -48,11 +49,22 @@ export class OddsLensWidget extends HTMLElement {
     this.market = { ...market };
     this.meta = { ...meta };
     this.betAmount = meta.defaultBetAmount || 10;
+    this.isMinimized = false; // Always restore from minimized state on new init
     this.aiInsight = null; // reset on new market
     this.render();
     this.startCountdown();
     // Request AI insight asynchronously after render
     this.fetchAiInsight();
+  }
+
+  pulseHighlight() {
+    const container = this.shadowRoot?.querySelector('.oddslens-container');
+    if (container) {
+      container.classList.remove('entering', 'pulsing-up');
+      void container.offsetWidth; // Force reflow
+      container.classList.add('entering');
+      setTimeout(() => container.classList.remove('entering'), 600);
+    }
   }
 
   updateOdds(tickData) {
@@ -110,7 +122,7 @@ export class OddsLensWidget extends HTMLElement {
         osc.start();
         osc.stop(this.audioCtx.currentTime + 0.08);
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   formatCountdown(seconds) {
@@ -423,12 +435,20 @@ export class OddsLensWidget extends HTMLElement {
       chrome.runtime && chrome.runtime.sendMessage;
 
     if (!canUseChromeRuntime) {
-      // Standalone demo: generate template directly
-      const { generateInsightTemplate } = await import('../background/ai-engine.js').catch(() => ({ generateInsightTemplate: null }));
-      if (generateInsightTemplate) {
-        this.aiInsight = { text: generateInsightTemplate(this.market, this.meta.aiAnalysis?.sentiment), source: 'template' };
-        this.updateAiCard();
+      // Standalone demo: generate deterministic template directly without network
+      const prob = this.market?.probability || 0.5;
+      const upPct = Math.round(prob * 100);
+      const downPct = 100 - upPct;
+      const label = this.meta.aiAnalysis?.sentiment?.label || 'NEUTRAL';
+      const asset = this.market?.asset || 'this market';
+      let text = `${asset} is evenly contested at ${upPct}% YES / ${downPct}% NO — high uncertainty creates opportunity for traders with a directional view.`;
+      if (label === 'BULLISH' && upPct >= 60) {
+        text = `With ${upPct}% market consensus and bullish article context, traders are pricing in strong conviction on the YES side for ${asset}.`;
+      } else if (label === 'BEARISH' && downPct >= 60) {
+        text = `${downPct}% of liquidity is positioned NO, aligned with the bearish article tone — consensus leans against the ${asset} event resolving YES.`;
       }
+      this.aiInsight = { text, source: 'template' };
+      this.updateAiCard();
       return;
     }
 
@@ -587,7 +607,10 @@ export class OddsLensWidget extends HTMLElement {
   }
 }
 
-// Define custom element if not already defined
+// Define custom element and expose globally
+if (typeof window !== 'undefined') {
+  window.OddsLensWidget = OddsLensWidget;
+}
 if (!customElements.get('odds-lens-overlay')) {
   customElements.define('odds-lens-overlay', OddsLensWidget);
 }

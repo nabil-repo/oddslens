@@ -184,18 +184,35 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   // 4. Helper to launch widget on active tab
-  function launchWidgetOnActiveTab(market, trigger) {
+  async function launchWidgetOnActiveTab(market, trigger) {
     if (isExtensionRuntime) {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs && tabs[0] && tabs[0].id) {
-          chrome.tabs.sendMessage(tabs[0].id, {
-            type: 'SHOW_ODDS_WIDGET',
-            trigger,
-            market,
-            confidence: 1.0
-          }).catch(err => {
-            console.warn('Could not launch widget on tab', err);
-          });
+      chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
+        if (!tabs || !tabs[0] || !tabs[0].id) return;
+        const tabId = tabs[0].id;
+        const msg = {
+          type: 'SHOW_ODDS_WIDGET',
+          trigger,
+          market,
+          confidence: 1.0
+        };
+
+        try {
+          await chrome.tabs.sendMessage(tabId, msg);
+        } catch (err) {
+          // If tab was loaded before extension update, dynamically inject scripts and retry
+          if (chrome.scripting && chrome.scripting.executeScript) {
+            try {
+              await chrome.scripting.executeScript({
+                target: { tabId },
+                files: ['content/widget.js', 'content/content-script.js']
+              });
+              setTimeout(() => {
+                chrome.tabs.sendMessage(tabId, msg).catch(() => { });
+              }, 150);
+            } catch (injectErr) {
+              console.warn('[OddsLens] Script injection fallback failed', injectErr);
+            }
+          }
         }
       });
     } else {

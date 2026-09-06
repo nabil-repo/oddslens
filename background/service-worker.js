@@ -15,6 +15,23 @@ let blockPollInterval = null;
 // Cache: marketId+probBucket → { text, source, ts }
 const insightCache = new Map();
 
+// Global initialization promise to ensure markets & settings are always loaded across MV3 lifecycle
+let initPromise = null;
+
+async function ensureInitialized() {
+  if (markets && markets.length > 0) return;
+  if (!initPromise) {
+    initPromise = (async () => {
+      await initStorage();
+      setupFeeds();
+    })();
+  }
+  await initPromise;
+}
+
+// Ensure storage & feeds are initialized as soon as the service worker loads
+ensureInitialized();
+
 // Initialize extension on install or startup
 chrome.runtime.onInstalled.addListener(async (details) => {
   console.log('[OddsLens] Extension installed/updated:', details.reason);
@@ -36,6 +53,10 @@ function createContextMenu() {
       id: 'oddslens-check-odds',
       title: "Check DreamDEX odds for '%s'",
       contexts: ['selection']
+    }, () => {
+      if (chrome.runtime.lastError) {
+        // Silently ignore if already exists
+      }
     });
   });
 }
@@ -253,34 +274,62 @@ function handleTickUpdate(tick) {
 // ─── Broadcast Helper ─────────────────────────────────────────────────────────
 
 function broadcastToTabs(message) {
+  // Also broadcast internally to extension views (popup, options page)
+  try {
+    chrome.runtime.sendMessage(message).catch(() => { });
+  } catch (e) { }
+
   chrome.tabs.query({ status: 'complete' }, (tabs) => {
     if (!tabs || !Array.isArray(tabs)) return;
     for (const tab of tabs) {
       if (!tab.url || tab.url.startsWith('chrome://') || tab.url.startsWith('chrome-extension://')) continue;
       try {
-        chrome.tabs.sendMessage(tab.id, message).catch(() => {});
-      } catch (e) {}
+        chrome.tabs.sendMessage(tab.id, message).catch(() => { });
+      } catch (e) { }
     }
   });
 }
 
 // ─── Context Menu Handler ─────────────────────────────────────────────────────
 
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  await ensureInitialized();
   if (info.menuItemId === 'oddslens-check-odds' && info.selectionText && tab?.id) {
-    const matchResult = matchText(info.selectionText, markets, settings.minMatchConfidence);
-
-    chrome.tabs.sendMessage(tab.id, {
+    const availableMarkets = (markets && markets.length > 0) ? markets : DEFAULT_MARKETS;
+    const matchResult = matchText(info.selectionText, availableMarkets, settings.minMatchConfidence);
+    const targetMarket = matchResult.bestMatch || availableMarkets[0];
+    const msg = {
       type: 'SHOW_ODDS_WIDGET',
       trigger: 'manual',
       selectedText: info.selectionText,
-      market: matchResult.bestMatch,
+      market: targetMarket,
       confidence: matchResult.confidence,
       candidates: matchResult.candidates,
       isFallback: matchResult.isFallback
-    }).catch(err => {
-      console.warn('[OddsLens] Could not send message to tab', err);
-    });
+    };
+
+    console.log('[OddsLens] Context menu clicked for:', info.selectionText, 'Matched:', targetMarket?.title);
+
+    try {
+      await chrome.tabs.sendMessage(tab.id, msg);
+    } catch (err) {
+      // If tab was loaded before extension update, dynamically inject scripts and retry
+      if (chrome.scripting && chrome.scripting.executeScript) {
+        try {
+          await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['content/widget.js', 'content/content-script.js']
+          });
+          setTimeout(() => {
+            chrome.tabs.sendMessage(tab.id, msg).catch((e) => {
+              console.warn('[OddsLens] Script retry sendMessage failed:', e);
+            });
+          }, 150);
+        } catch (injectErr) {
+          console.warn('[OddsLens] Context menu injection fallback failed', injectErr);
+        }
+      }
+    }
   }
 });
 
@@ -289,150 +338,158 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   const { type, payload } = request;
 
-  switch (type) {
+  (async () => {
+    await ensureInitialized();
 
-    case 'CHECK_AUTO_DETECT': {
-      if (!settings.autoDetectEnabled) {
-        sendResponse({ matched: false, reason: 'auto-detect-disabled' });
-        return true;
-      }
-      const match = matchUrl(payload?.url || sender?.url, markets);
-      if (match) {
-        if (sender.tab?.id) {
-          chrome.action.setBadgeText({ tabId: sender.tab.id, text: 'ODDS' });
-          chrome.action.setBadgeBackgroundColor({ tabId: sender.tab.id, color: '#00E5FF' });
+    switch (type) {
+
+      case 'CHECK_AUTO_DETECT': {
+        if (!settings.autoDetectEnabled) {
+          sendResponse({ matched: false, reason: 'auto-detect-disabled' });
+          return;
         }
-        sendResponse({
-          matched: true,
-          market: match.market,
-          matchType: match.matchType,
-          confidence: match.confidence
-        });
-      } else {
-        sendResponse({ matched: false });
-      }
-      return true;
-    }
-
-    case 'MATCH_TEXT': {
-      const result = matchText(payload.text, markets, settings.minMatchConfidence);
-      sendResponse(result);
-      return true;
-    }
-
-    case 'ANALYZE_PAGE': {
-      // AI: Run NLP + sentiment on article text
-      const { articleText, headline } = payload || {};
-      const analysis = analyzeArticle(articleText, headline, markets);
-      sendResponse({ success: true, analysis });
-      return true;
-    }
-
-    case 'GET_AI_INSIGHT': {
-      // AI: Generate market insight via Gemini or deterministic template
-      const { market, sentiment, headline } = payload || {};
-      if (!market) {
-        sendResponse({ success: false, insight: null });
-        return true;
+        const availableMarkets = (markets && markets.length > 0) ? markets : DEFAULT_MARKETS;
+        const match = matchUrl(payload?.url || sender?.url, availableMarkets);
+        if (match) {
+          if (sender.tab?.id) {
+            chrome.action.setBadgeText({ tabId: sender.tab.id, text: 'ODDS' });
+            chrome.action.setBadgeBackgroundColor({ tabId: sender.tab.id, color: '#00E5FF' });
+          }
+          sendResponse({
+            matched: true,
+            market: match.market,
+            matchType: match.matchType,
+            confidence: match.confidence
+          });
+        } else {
+          sendResponse({ matched: false });
+        }
+        break;
       }
 
-      // Check cache: key = marketId + probability bucket (rounded to 5%)
-      const probBucket = Math.round((market.probability || 0.5) * 20) / 20;
-      const sentLabel = sentiment?.label || 'NEUTRAL';
-      const cacheKey = `${market.id}::${probBucket}::${sentLabel}`;
+      case 'MATCH_TEXT': {
+        const availableMarkets = (markets && markets.length > 0) ? markets : DEFAULT_MARKETS;
+        const result = matchText(payload.text, availableMarkets, settings.minMatchConfidence);
+        sendResponse(result);
+        break;
+      }
 
-      if (insightCache.has(cacheKey)) {
-        const cached = insightCache.get(cacheKey);
-        // Cache valid for 5 minutes
-        if (Date.now() - cached.ts < 300000) {
-          sendResponse({ success: true, insight: cached });
+      case 'ANALYZE_PAGE': {
+        // AI: Run NLP + sentiment on article text
+        const { articleText, headline } = payload || {};
+        const availableMarkets = (markets && markets.length > 0) ? markets : DEFAULT_MARKETS;
+        const analysis = analyzeArticle(articleText, headline, availableMarkets);
+        sendResponse({ success: true, analysis });
+        break;
+      }
+
+      case 'GET_AI_INSIGHT': {
+        // AI: Generate market insight via Gemini or deterministic template
+        const { market, sentiment, headline } = payload || {};
+        if (!market) {
+          sendResponse({ success: false, insight: null });
           return true;
         }
-      }
 
-      const apiKey = settings.geminiApiKey || '';
+        // Check cache: key = marketId + probability bucket (rounded to 5%)
+        const probBucket = Math.round((market.probability || 0.5) * 20) / 20;
+        const sentLabel = sentiment?.label || 'NEUTRAL';
+        const cacheKey = `${market.id}::${probBucket}::${sentLabel}`;
 
-      // Async: call Gemini or OpenRouter, respond when done
-      callAiInsight(market, sentiment, headline, apiKey, {
-        provider: settings.aiProvider,
-        model: settings.openRouterModel
-      }).then(insight => {
-        insightCache.set(cacheKey, { ...insight, ts: Date.now() });
-        sendResponse({ success: true, insight });
-      }).catch(() => {
-        const fallback = { text: generateInsightTemplate(market, sentiment), source: 'template' };
-        sendResponse({ success: true, insight: fallback });
-      });
-
-      return true; // keep channel open for async response
-    }
-
-    case 'GET_STATE': {
-      sendResponse({
-        markets,
-        settings,
-        wsStatus: dreamDexClient ? dreamDexClient.status : 'DISCONNECTED',
-        somniaBlock: lastSomniaBlock,
-        networkInfo: SOMNIA_NETWORKS[settings.network] || SOMNIA_NETWORKS.testnet
-      });
-      return true;
-    }
-
-    case 'UPDATE_SETTINGS': {
-      settings = { ...settings, ...payload };
-      chrome.storage.local.set({ settings });
-
-      if (mockStreamer) {
-        if (settings.simulationMode) {
-          mockStreamer.start();
-        } else {
-          mockStreamer.stop();
+        if (insightCache.has(cacheKey)) {
+          const cached = insightCache.get(cacheKey);
+          // Cache valid for 5 minutes
+          if (Date.now() - cached.ts < 300000) {
+            sendResponse({ success: true, insight: cached });
+            return true;
+          }
         }
+
+        const apiKey = settings.geminiApiKey || '';
+
+        // Async: call Gemini or OpenRouter, respond when done
+        callAiInsight(market, sentiment, headline, apiKey, {
+          provider: settings.aiProvider,
+          model: settings.openRouterModel
+        }).then(insight => {
+          insightCache.set(cacheKey, { ...insight, ts: Date.now() });
+          sendResponse({ success: true, insight });
+        }).catch(() => {
+          const fallback = { text: generateInsightTemplate(market, sentiment), source: 'template' };
+          sendResponse({ success: true, insight: fallback });
+        });
+
+        return true; // keep channel open for async response
       }
 
-      broadcastToTabs({ type: 'SETTINGS_CHANGED', settings });
-      sendResponse({ success: true, settings });
-      return true;
-    }
-
-    case 'SAVE_MARKETS': {
-      markets = payload.markets;
-      chrome.storage.local.set({ markets });
-      if (mockStreamer) {
-        mockStreamer.setMarkets(markets);
+      case 'GET_STATE': {
+        sendResponse({
+          markets,
+          settings,
+          wsStatus: dreamDexClient ? dreamDexClient.status : 'DISCONNECTED',
+          somniaBlock: lastSomniaBlock,
+          networkInfo: SOMNIA_NETWORKS[settings.network] || SOMNIA_NETWORKS.testnet
+        });
+        return true;
       }
-      broadcastToTabs({ type: 'MARKETS_CHANGED', markets });
-      sendResponse({ success: true, count: markets.length });
-      return true;
-    }
 
-    case 'RESET_DEFAULTS': {
-      markets = DEFAULT_MARKETS.map(m => {
-        const expiry = Math.floor(Date.now() / 1000) + (m.expiryOffsetSec || 14400);
-        return { ...m, expiry, targetTradeUrl: getMarketTradeUrl(m) };
-      });
-      settings = { ...DEFAULT_SETTINGS };
-      chrome.storage.local.set({ markets, settings });
-      if (mockStreamer) {
-        mockStreamer.setMarkets(markets);
-        mockStreamer.start();
+      case 'UPDATE_SETTINGS': {
+        settings = { ...settings, ...payload };
+        chrome.storage.local.set({ settings });
+
+        if (mockStreamer) {
+          if (settings.simulationMode) {
+            mockStreamer.start();
+          } else {
+            mockStreamer.stop();
+          }
+        }
+
+        broadcastToTabs({ type: 'SETTINGS_CHANGED', settings });
+        sendResponse({ success: true, settings });
+        return true;
       }
-      insightCache.clear();
-      broadcastToTabs({ type: 'STATE_RESET', markets, settings });
-      sendResponse({ success: true });
-      return true;
-    }
 
-    case 'FORCE_TICK': {
-      if (mockStreamer) {
-        mockStreamer.forceTick(payload.marketId);
+      case 'SAVE_MARKETS': {
+        markets = payload.markets;
+        chrome.storage.local.set({ markets });
+        if (mockStreamer) {
+          mockStreamer.setMarkets(markets);
+        }
+        broadcastToTabs({ type: 'MARKETS_CHANGED', markets });
+        sendResponse({ success: true, count: markets.length });
+        return true;
       }
-      sendResponse({ success: true });
-      return true;
-    }
 
-    default:
-      sendResponse({ error: 'unknown_message_type' });
-      return true;
-  }
+      case 'RESET_DEFAULTS': {
+        markets = DEFAULT_MARKETS.map(m => {
+          const expiry = Math.floor(Date.now() / 1000) + (m.expiryOffsetSec || 14400);
+          return { ...m, expiry, targetTradeUrl: getMarketTradeUrl(m) };
+        });
+        settings = { ...DEFAULT_SETTINGS };
+        chrome.storage.local.set({ markets, settings });
+        if (mockStreamer) {
+          mockStreamer.setMarkets(markets);
+          mockStreamer.start();
+        }
+        insightCache.clear();
+        broadcastToTabs({ type: 'STATE_RESET', markets, settings });
+        sendResponse({ success: true });
+        return true;
+      }
+
+      case 'FORCE_TICK': {
+        if (mockStreamer) {
+          mockStreamer.forceTick(payload.marketId);
+        }
+        sendResponse({ success: true });
+        break;
+      }
+
+      default:
+        sendResponse({ error: 'unknown_message_type' });
+        break;
+    }
+  })();
+  return true; // Keep message channel open for async response
 });

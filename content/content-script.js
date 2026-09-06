@@ -8,12 +8,9 @@
 
   console.log('[OddsLens] Content script initialized on', window.location.href);
 
-  // Dynamically load the Widget component
-  const scriptUrl = chrome.runtime.getURL('content/widget.js');
-  try {
-    await import(scriptUrl);
-  } catch (err) {
-    console.error('[OddsLens] Failed to import widget module', err);
+  // Ensure OddsLensWidget custom element is defined
+  if (!customElements.get('odds-lens-overlay') && typeof OddsLensWidget !== 'undefined') {
+    customElements.define('odds-lens-overlay', OddsLensWidget);
   }
 
   let activeWidget = null;
@@ -27,38 +24,42 @@
    * Returns first ~3000 characters for NLP analysis.
    */
   function extractArticleText() {
-    // Try semantic article elements first
-    const articleEl = document.querySelector('article, [role="main"], main, .article-body, .post-content, .entry-content, .story-body');
-    const source = articleEl || document.body;
+    try {
+      const articleEl = document.querySelector('article, [role="main"], main, .article-body, .post-content, .entry-content, .story-body');
+      const source = articleEl || document.body;
+      if (!source) return '';
 
-    // Clone to avoid modifying DOM
-    const clone = source.cloneNode(true);
+      const clone = source.cloneNode(true);
+      const noiseSelectors = ['nav', 'header', 'footer', 'aside', '.sidebar', '.ad', '.advertisement',
+        '.cookie', '.popup', '.modal', 'script', 'style', 'noscript'];
+      noiseSelectors.forEach(sel => {
+        clone.querySelectorAll(sel).forEach(el => el.remove());
+      });
 
-    // Remove noise elements
-    const noiseSelectors = ['nav', 'header', 'footer', 'aside', '.sidebar', '.ad', '.advertisement',
-      '.cookie', '.popup', '.modal', 'script', 'style', 'noscript'];
-    noiseSelectors.forEach(sel => {
-      clone.querySelectorAll(sel).forEach(el => el.remove());
-    });
-
-    const text = (clone.innerText || clone.textContent || '').replace(/\s+/g, ' ').trim();
-    return text.slice(0, 3000);
+      return (clone.innerText || clone.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 3000);
+    } catch (e) {
+      return '';
+    }
   }
 
   function extractHeadline() {
-    return (
-      document.querySelector('h1')?.textContent?.trim() ||
-      document.querySelector('meta[property="og:title"]')?.content ||
-      document.title ||
-      ''
-    ).slice(0, 200);
+    try {
+      return (
+        document.querySelector('h1')?.textContent?.trim() ||
+        document.querySelector('meta[property="og:title"]')?.content ||
+        document.title ||
+        ''
+      ).slice(0, 200);
+    } catch (e) {
+      return '';
+    }
   }
 
   // ─── AI Page Analysis ─────────────────────────────────────────────────────
 
   /**
    * Run AI analysis on the current article. Returns { sentiment, nlpMatch }.
-   * Caches the result so multiple widget shows don't re-analyze.
+   * Includes a 2.5-second timeout so it never blocks widget display.
    */
   async function analyzeCurrentPage() {
     if (pageAnalysis) return pageAnalysis;
@@ -69,16 +70,17 @@
     if (articleText.length < 50) return null;
 
     return new Promise((resolve) => {
+      const timeout = setTimeout(() => resolve(null), 2500);
       chrome.runtime.sendMessage({
         type: 'ANALYZE_PAGE',
         payload: { articleText, headline }
       }, (response) => {
+        clearTimeout(timeout);
         if (chrome.runtime.lastError || !response?.success) {
           resolve(null);
           return;
         }
         pageAnalysis = response.analysis;
-        console.log('[OddsLens] AI Analysis:', pageAnalysis);
         resolve(pageAnalysis);
       });
     });
@@ -86,39 +88,58 @@
 
   // ─── Widget Display ───────────────────────────────────────────────────────
 
-  // Helper to attach or reveal widget with optional AI analysis
-  async function displayWidget(market, meta = {}) {
+  // Attach or reveal widget instantly without blocking
+  function displayWidget(market, meta = {}) {
     if (!market) return;
 
-    // Run AI analysis on the page before showing widget (non-blocking on first call)
-    const analysis = await analyzeCurrentPage().catch(() => null);
+    // Ensure custom element is registered
+    if (!customElements.get('odds-lens-overlay') && typeof OddsLensWidget !== 'undefined') {
+      customElements.define('odds-lens-overlay', OddsLensWidget);
+    }
 
-    // Check if NLP suggests a better market match
-    let resolvedMarket = market;
-    let resolvedMeta = { ...meta, aiAnalysis: analysis, headline: extractHeadline() };
-
-    if (analysis?.nlpMatch?.bestMatch && analysis.nlpMatch.confidence > 0.4 && meta.trigger === 'auto-detect') {
-      // NLP found a high-confidence match different from URL match — prefer it
-      const nlpBest = analysis.nlpMatch.bestMatch;
-      if (nlpBest.id !== market.id) {
-        console.log(`[OddsLens] NLP override: ${market.title} → ${nlpBest.title} (confidence: ${analysis.nlpMatch.confidence})`);
-        resolvedMarket = nlpBest;
-        resolvedMeta.candidates = [
-          { id: market.id, title: market.title },
-          ...(analysis.nlpMatch.candidates || []),
-        ];
+    if (!activeWidget || !document.contains(activeWidget)) {
+      activeWidget = document.querySelector('odds-lens-overlay') || document.createElement('odds-lens-overlay');
+      const target = document.body || document.documentElement;
+      if (!document.contains(activeWidget) && target) {
+        target.appendChild(activeWidget);
       }
     }
 
-    if (!activeWidget || !document.body.contains(activeWidget)) {
-      activeWidget = document.createElement('odds-lens-overlay');
-      document.body.appendChild(activeWidget);
-    }
+    const headline = extractHeadline();
 
-    activeWidget.init(resolvedMarket, resolvedMeta);
+    // Ensure full card is shown even if previously minimized
+    activeWidget.isMinimized = false;
+
+    // Immediately initialize and display the widget (instant 0ms response)
+    if (activeWidget.init) {
+      activeWidget.init(market, { ...meta, headline });
+    }
     activeWidget.style.display = 'block';
     activeWidget.style.opacity = '1';
     activeWidget.style.transform = 'scale(1)';
+
+    if (typeof activeWidget.pulseHighlight === 'function') {
+      activeWidget.pulseHighlight();
+    }
+
+    // Asynchronously run NLP entity refinement in background without blocking display
+    analyzeCurrentPage().then((analysis) => {
+      if (!analysis) return;
+      if (analysis.nlpMatch?.bestMatch && analysis.nlpMatch.confidence > 0.4 && meta.trigger === 'auto-detect') {
+        const nlpBest = analysis.nlpMatch.bestMatch;
+        if (nlpBest.id !== market.id && activeWidget.init) {
+          console.log(`[OddsLens] NLP refinement: ${market.title} → ${nlpBest.title}`);
+          activeWidget.init(nlpBest, {
+            ...meta,
+            aiAnalysis: analysis,
+            headline,
+            candidates: [{ id: market.id, title: market.title }, ...(analysis.nlpMatch.candidates || [])]
+          });
+          return;
+        }
+      }
+      activeWidget.meta = { ...activeWidget.meta, aiAnalysis: analysis };
+    }).catch(() => {});
   }
 
   // ─── Auto-Detect on Page Load ─────────────────────────────────────────────
@@ -131,12 +152,10 @@
         payload: { url: window.location.href }
       },
       (response) => {
-        if (chrome.runtime.lastError) {
-          return;
-        }
+        if (chrome.runtime.lastError) return;
         if (response && response.matched && response.market) {
           console.log('[OddsLens] Auto-detected matching market:', response.market.title);
-          // Wait a moment for page layout to settle, then show widget with AI
+          // Wait briefly for host DOM to settle, then mount widget
           setTimeout(() => {
             displayWidget(response.market, {
               trigger: 'auto-detect',
@@ -144,7 +163,7 @@
               matchType: response.matchType,
               defaultBetAmount: 10
             });
-          }, 600);
+          }, 300);
         }
       }
     );
@@ -170,15 +189,17 @@
       }
 
       case 'ODDS_UPDATE': {
-        if (activeWidget && document.body.contains(activeWidget)) {
-          activeWidget.updateOdds(message.payload);
+        const widget = activeWidget || document.querySelector('odds-lens-overlay');
+        if (widget && document.body.contains(widget) && typeof widget.updateOdds === 'function') {
+          widget.updateOdds(message.payload);
         }
         break;
       }
 
       case 'SETTINGS_CHANGED': {
-        if (activeWidget && document.body.contains(activeWidget)) {
-          activeWidget.meta = { ...activeWidget.meta, ...message.settings };
+        const widget = activeWidget || document.querySelector('odds-lens-overlay');
+        if (widget && document.body.contains(widget)) {
+          widget.meta = { ...widget.meta, ...message.settings };
         }
         break;
       }

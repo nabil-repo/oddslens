@@ -25,7 +25,8 @@
     "contextMenus",
     "storage",
     "activeTab",
-    "tabs"
+    "tabs",
+    "scripting"
   ],
   "host_permissions": [
     "<all_urls>",
@@ -38,6 +39,7 @@
         "<all_urls>"
       ],
       "js": [
+        "content/widget.js",
         "content/content-script.js"
       ],
       "run_at": "document_idle"

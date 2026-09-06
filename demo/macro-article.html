@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Federal Reserve Enters High-Stakes Policy Window Amid Shifting Rate Cut Odds — Global Journal</title>
   <link rel="stylesheet" href="article.css">
 </head>
+
 <body>
   <!-- Header Bar -->
   <nav class="pub-nav">
@@ -32,7 +34,8 @@
     </h1>
 
     <p class="article-lead">
-      Chair Jerome Powell and the Federal Open Market Committee prepare to convene, with derivative and prediction markets adjusting expectations for interest rate cuts.
+      Chair Jerome Powell and the Federal Open Market Committee prepare to convene, with derivative and prediction
+      markets adjusting expectations for interest rate cuts.
     </p>
 
     <div class="author-row">
@@ -47,39 +50,57 @@
       <div class="demo-callout">
         <div class="callout-badge">OddsLens Live Demo Playground</div>
         <p>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px; display: inline-block;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            style="vertical-align: -2px; margin-right: 4px; display: inline-block;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
           <strong>How to test OddsLens on this page:</strong><br>
-          • <strong>Auto-Detect:</strong> If OddsLens is installed, the widget will recognize this macro/rates URL and display the Fed 50 bps cut event contract.<br>
-          • <strong>Manual Mode:</strong> Highlight phrases like <mark>Federal Reserve</mark>, <mark>rate cut</mark>, or <mark>Jerome Powell</mark>, right-click, and select <em>"Check DreamDEX odds for this"</em>.
+          • <strong>Auto-Detect:</strong> If OddsLens is installed, the widget will recognize this macro/rates URL and
+          display the Fed 50 bps cut event contract.<br>
+          • <strong>Manual Mode:</strong> Highlight phrases like <mark>Federal Reserve</mark>, <mark>rate cut</mark>, or
+          <mark>Jerome Powell</mark>, right-click, and select <em>"Check DreamDEX odds for this"</em>.
         </p>
       </div>
 
       <p>
-        Washington — The <mark class="match-hint">Federal Reserve</mark> is standing on the precipice of its most pivotal monetary policy decision of the cycle. Following cooling inflation prints and nuanced labor market signals, debate among FOMC participants has intensified over whether to commence easing with a conventional 25 basis point reduction or an aggressive <mark class="match-hint">rate cut</mark> of 50 basis points.
+        Washington — The <mark class="match-hint">Federal Reserve</mark> is standing on the precipice of its most
+        pivotal monetary policy decision of the cycle. Following cooling inflation prints and nuanced labor market
+        signals, debate among FOMC participants has intensified over whether to commence easing with a conventional 25
+        basis point reduction or an aggressive <mark class="match-hint">rate cut</mark> of 50 basis points.
       </p>
 
       <p>
-        Fed Chairman <mark class="match-hint">Jerome Powell</mark> hinted in recent remarks that the balance of risks has shifted from runaway inflation toward employment preservation. "We will adjust the stance of policy based on the totality of the incoming data and the evolving balance of risks," Powell stated.
+        Fed Chairman <mark class="match-hint">Jerome Powell</mark> hinted in recent remarks that the balance of risks
+        has shifted from runaway inflation toward employment preservation. "We will adjust the stance of policy based on
+        the totality of the incoming data and the evolving balance of risks," Powell stated.
       </p>
 
       <blockquote>
-        "Prediction markets offer an unvarnished, real-time barometer of market consensus that traditional surveys often lag," said one Wall Street chief economist.
+        "Prediction markets offer an unvarnished, real-time barometer of market consensus that traditional surveys often
+        lag," said one Wall Street chief economist.
       </blockquote>
 
       <h2>Decentralized Event Contracts as Real-Time Forecasts</h2>
       <p>
-        On decentralized trading venue <mark class="match-hint">DreamDEX</mark>, powered by the high-throughput Somnia blockchain, liquidity has surged into binary interest rate contracts. Market participants are pricing the probability of a jumbo 50 bps reduction at approximately 38%, with $63,000 in volume executed in the current FOMC trading window.
+        On decentralized trading venue <mark class="match-hint">DreamDEX</mark>, powered by the high-throughput Somnia
+        blockchain, liquidity has surged into binary interest rate contracts. Market participants are pricing the
+        probability of a jumbo 50 bps reduction at approximately 38%, with $63,000 in volume executed in the current
+        FOMC trading window.
       </p>
 
       <p>
-        With tools like <mark class="match-hint">OddsLens</mark>, retail readers and financial journalists are now seeing these dynamic probabilities embedded directly into news feeds, bridging on-chain DeFi markets with macroeconomic analysis.
+        With tools like <mark class="match-hint">OddsLens</mark>, retail readers and financial journalists are now
+        seeing these dynamic probabilities embedded directly into news feeds, bridging on-chain DeFi markets with
+        macroeconomic analysis.
       </p>
     </article>
   </main>
 
   <!-- Standalone Demo Fallback Script -->
   <script type="module">
-    import { OddsLensWidget } from '../content/widget.js';
+    import '../content/widget.js';
     import { DEFAULT_MARKETS } from '../background/manifest-data.js';
 
     setTimeout(() => {
@@ -117,11 +138,14 @@
             }
             if (target && target.id !== widget.market.id) {
               widget.init(target, { trigger: 'demo-selection', candidates: DEFAULT_MARKETS });
+            } else if (widget.pulseHighlight) {
+              widget.pulseHighlight();
             }
           }
         });
 
         setInterval(() => {
+          if (window.__ODDSLENS_INJECTED__) return;
           if (widget.market) {
             const delta = (Math.random() - 0.47) * 0.02;
             const newProb = Math.max(0.1, Math.min(0.9, Math.round((widget.market.probability + delta) * 1000) / 1000));
@@ -137,4 +161,5 @@
     }, 800);
   </script>
 </body>
+
 </html>

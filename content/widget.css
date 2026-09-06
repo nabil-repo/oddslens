@@ -2,8 +2,11 @@
 
 :host {
   all: initial;
-  position: fixed;
-  z-index: 2147483647;
+  display: block !important;
+  position: fixed !important;
+  top: 24px;
+  right: 24px;
+  z-index: 2147483647 !important;
   /* Top-most layer */
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   color-scheme: dark;
@@ -513,6 +516,7 @@
     opacity: 0;
     transform: translateX(120%) scale(0.92);
   }
+
   to {
     opacity: 1;
     transform: translateX(0) scale(1);
@@ -525,8 +529,17 @@
 
 /* ── Countdown Urgency Pulse ─────────────────────────────────────────────── */
 @keyframes urgencyPulse {
-  0%, 100% { color: #FF3366; opacity: 1; }
-  50% { color: #FF6688; opacity: 0.6; }
+
+  0%,
+  100% {
+    color: #FF3366;
+    opacity: 1;
+  }
+
+  50% {
+    color: #FF6688;
+    opacity: 0.6;
+  }
 }
 
 .countdown-timer.urgent {
@@ -686,18 +699,22 @@
 
 /* Shimmer loading state */
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .insight-shimmer {
   height: 11px;
   border-radius: 4px;
   background: linear-gradient(90deg,
-    rgba(255, 255, 255, 0.04) 0%,
-    rgba(255, 255, 255, 0.10) 50%,
-    rgba(255, 255, 255, 0.04) 100%
-  );
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.10) 50%,
+      rgba(255, 255, 255, 0.04) 100%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite linear;
 }

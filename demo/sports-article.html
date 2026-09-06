@@ -79,7 +79,7 @@
 
   <!-- Standalone Demo Fallback Script -->
   <script type="module">
-    import { OddsLensWidget } from '../content/widget.js';
+    import '../content/widget.js';
     import { DEFAULT_MARKETS } from '../background/manifest-data.js';
 
     setTimeout(() => {
@@ -117,11 +117,14 @@
             }
             if (target && target.id !== widget.market.id) {
               widget.init(target, { trigger: 'demo-selection', candidates: DEFAULT_MARKETS });
+            } else if (widget.pulseHighlight) {
+              widget.pulseHighlight();
             }
           }
         });
 
         setInterval(() => {
+          if (window.__ODDSLENS_INJECTED__) return;
           if (widget.market) {
             const delta = (Math.random() - 0.49) * 0.02;
             const newProb = Math.max(0.1, Math.min(0.9, Math.round((widget.market.probability + delta) * 1000) / 1000));
