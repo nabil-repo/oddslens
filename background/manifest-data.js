@@ -7,7 +7,7 @@ export const SOMNIA_NETWORKS = {
     rpcUrl: 'https://api.infra.testnet.somnia.network/',
     wsFeedUrl: 'wss://stg.api.dreamdex.io/v0/ws/public',
     explorerUrl: 'https://shannon-explorer.somnia.network',
-    dexUrl: 'https://app.dreamdex.io/events',
+    dexUrl: 'https://app.dreamdex.io/event-contracts',
     collateral: {
       symbol: 'tUSDC',
       address: '0x70a86D8842FB63C4Ad2b7cdddF530eBf1BB25d8E',
@@ -20,7 +20,7 @@ export const SOMNIA_NETWORKS = {
     rpcUrl: 'https://dream-rpc.somnia.network',
     wsFeedUrl: 'wss://api.dreamdex.io/v0/ws/public',
     explorerUrl: 'https://explorer.somnia.network',
-    dexUrl: 'https://dreamdex.io/events',
+    dexUrl: 'https://app.dreamdex.io/event-contracts',
     collateral: {
       symbol: 'USDso',
       address: '0x00000022dA000002656c64D9eA6011ea952D008A',
@@ -75,7 +75,7 @@ export const DEFAULT_MARKETS = [
       'bull run',
       'cryptocurrency'
     ],
-    targetTradeUrl: `https://app.dreamdex.io/events?symbol=${encodeURIComponent('BTC-100K-UP/USDso#YES')}`
+    targetTradeUrl: 'https://app.dreamdex.io/event-contracts/WBTC:USDso/15m'
   },
   {
     id: 'market-somi-tps',
@@ -111,7 +111,7 @@ export const DEFAULT_MARKETS = [
       'high speed',
       'multistream'
     ],
-    targetTradeUrl: `https://app.dreamdex.io/events?symbol=${encodeURIComponent('SOMI-TPS-100K/USDso#YES')}`
+    targetTradeUrl: 'https://app.dreamdex.io/event-contracts'
   },
   {
     id: 'market-ucl-final',
@@ -149,7 +149,7 @@ export const DEFAULT_MARKETS = [
       'etihad',
       'uefa'
     ],
-    targetTradeUrl: `https://app.dreamdex.io/events?symbol=${encodeURIComponent('UCL-FINAL-RMA/USDso#YES')}`
+    targetTradeUrl: 'https://app.dreamdex.io/event-contracts'
   },
   {
     id: 'market-fed-rates',
@@ -186,7 +186,7 @@ export const DEFAULT_MARKETS = [
       'basis points',
       'monetary policy'
     ],
-    targetTradeUrl: 'https://app.dreamdex.io'
+    targetTradeUrl: 'https://app.dreamdex.io/event-contracts'
   }
 ];
 

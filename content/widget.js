@@ -1,5 +1,15 @@
 // OddsLens Shadow DOM Widget Component
 
+const ICONS = {
+  SPARKLE: `<svg class="ai-sparkle-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"></path><path d="M5 3v4"></path><path d="M19 17v4"></path><path d="M3 5h4"></path><path d="M17 19h4"></path></svg>`,
+  BULLISH: `<svg class="sentiment-svg bullish" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>`,
+  BEARISH: `<svg class="sentiment-svg bearish" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>`,
+  NEUTRAL: `<svg class="sentiment-svg neutral" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg>`,
+  ARROW_UP: `<svg class="side-arrow-svg" width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l-8 12h16z"/></svg>`,
+  ARROW_DOWN: `<svg class="side-arrow-svg" width="9" height="9" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l8-12H4z"/></svg>`,
+  EXTERNAL_LINK: `<svg class="btn-arrow-svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="17" x2="17" y2="7"></line><polyline points="7 7 17 7 17 17"></polyline></svg>`
+};
+
 export class OddsLensWidget extends HTMLElement {
   constructor() {
     super();
@@ -170,6 +180,20 @@ export class OddsLensWidget extends HTMLElement {
       return;
     }
 
+    // Resolve real working DreamDEX Event Contracts URL (avoiding obsolete /events?symbol= 404s)
+    let tradeUrl = this.market.targetTradeUrl || '';
+    if (!tradeUrl || tradeUrl.includes('/events?symbol=') || tradeUrl.endsWith('/events')) {
+      const asset = (this.market.asset || '').toUpperCase();
+      const symbol = (this.market.symbol || '').toUpperCase();
+      if (asset === 'BTC' || symbol.includes('BTC')) {
+        tradeUrl = 'https://app.dreamdex.io/event-contracts/WBTC:USDso/15m';
+      } else if (asset === 'ETH' || symbol.includes('ETH')) {
+        tradeUrl = 'https://app.dreamdex.io/event-contracts/WETH:USDso/15m';
+      } else {
+        tradeUrl = 'https://app.dreamdex.io/event-contracts';
+      }
+    }
+
     this.shadowRoot.innerHTML = `
       <link rel="stylesheet" href="${cssUrl}">
       <div class="oddslens-container" role="dialog" aria-label="DreamDEX Odds Widget">
@@ -221,14 +245,14 @@ export class OddsLensWidget extends HTMLElement {
           <div class="odds-gauge-card">
             <div class="odds-labels-row">
               <div class="side-label">
-                <span class="side-title up">▲ YES / UP</span>
+                <span class="side-title up">${ICONS.ARROW_UP} YES / UP</span>
                 <div class="side-odds-wrap">
                   <span class="side-percent up">${upPercent}%</span>
                   <span class="side-payout up-mult">${upMultiplier}x</span>
                 </div>
               </div>
               <div class="side-label">
-                <span class="side-title down">▼ NO / DOWN</span>
+                <span class="side-title down">${ICONS.ARROW_DOWN} NO / DOWN</span>
                 <div class="side-odds-wrap">
                   <span class="side-payout down-mult">${downMultiplier}x</span>
                   <span class="side-percent down">${downPercent}%</span>
@@ -290,9 +314,9 @@ export class OddsLensWidget extends HTMLElement {
 
           <!-- Action Button: Trade on DreamDEX -->
           <div class="action-row">
-            <a class="trade-btn" href="${this.market.targetTradeUrl || 'https://app.dreamdex.io'}" target="_blank" rel="noopener noreferrer">
+            <a class="trade-btn" href="${tradeUrl}" target="_blank" rel="noopener noreferrer">
               <span>Trade on DreamDEX</span>
-              <span class="btn-arrow">↗</span>
+              <span class="btn-arrow">${ICONS.EXTERNAL_LINK}</span>
             </a>
           </div>
 
@@ -330,11 +354,10 @@ export class OddsLensWidget extends HTMLElement {
     const sentiment = this.meta.aiAnalysis?.sentiment;
     if (!sentiment) return '';
 
-    const icons = { BULLISH: '📈', BEARISH: '📉', NEUTRAL: '⚖' };
     const labels = { BULLISH: 'Bullish Context', BEARISH: 'Bearish Context', NEUTRAL: 'Neutral' };
     const label = sentiment.label || 'NEUTRAL';
-    const icon = icons[label];
-    const text = labels[label];
+    const icon = ICONS[label] || ICONS.NEUTRAL;
+    const text = labels[label] || 'Neutral';
     const intensity = Math.round((sentiment.intensity || 0) * 100);
     const topWords = (sentiment.topWords || []).slice(0, 3).join(', ');
 
@@ -359,7 +382,7 @@ export class OddsLensWidget extends HTMLElement {
       return `
         <div class="ai-insight-card">
           <div class="ai-card-header">
-            <span class="ai-card-icon">✨</span>
+            <span class="ai-card-icon">${ICONS.SPARKLE}</span>
             AI Market Insight
             <span class="ai-source-badge ${isGemini ? 'gemini' : ''}">${isGemini ? 'Gemini AI' : 'AI Analysis'}</span>
           </div>
@@ -372,7 +395,7 @@ export class OddsLensWidget extends HTMLElement {
     return `
       <div class="ai-insight-card" id="ai-card-loading">
         <div class="ai-card-header">
-          <span class="ai-card-icon">✨</span>
+          <span class="ai-card-icon">${ICONS.SPARKLE}</span>
           AI Market Insight
           <span class="ai-source-badge">Loading...</span>
         </div>
@@ -430,7 +453,7 @@ export class OddsLensWidget extends HTMLElement {
     card.id = 'ai-card-loaded';
     card.innerHTML = `
       <div class="ai-card-header">
-        <span class="ai-card-icon">✨</span>
+        <span class="ai-card-icon">${ICONS.SPARKLE}</span>
         AI Market Insight
         <span class="ai-source-badge ${isGemini ? 'gemini' : ''}">${isGemini ? 'Gemini AI' : 'AI Analysis'}</span>
       </div>

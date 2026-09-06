@@ -168,7 +168,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('form-prob').value = m.probability || 0.50;
     document.getElementById('form-patterns').value = (m.urlPatterns || []).join(', ');
     document.getElementById('form-keywords').value = (m.keywords || []).join(', ');
-    document.getElementById('form-url').value = m.targetTradeUrl || 'https://app.dreamdex.io';
+    document.getElementById('form-url').value = m.targetTradeUrl || 'https://app.dreamdex.io/event-contracts';
     contractModal.classList.remove('hidden');
   }
 
@@ -207,7 +207,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       .split(',')
       .map(s => s.trim())
       .filter(Boolean);
-    const targetTradeUrl = document.getElementById('form-url').value.trim();
+    const targetTradeUrl = document.getElementById('form-url').value.trim() || 'https://app.dreamdex.io/event-contracts';
 
     const existingIndex = markets.findIndex(m => m.id === id);
     const updatedMarket = {

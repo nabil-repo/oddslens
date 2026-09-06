@@ -114,25 +114,34 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 2. Settings update listeners
   toggleAutoDetect.addEventListener('change', () => {
-    chrome.runtime.sendMessage({
-      type: 'UPDATE_SETTINGS',
-      payload: { autoDetectEnabled: toggleAutoDetect.checked }
-    });
+    if (isExtensionRuntime) {
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_SETTINGS',
+        payload: { autoDetectEnabled: toggleAutoDetect.checked }
+      });
+    }
   });
 
   toggleSimulation.addEventListener('change', () => {
-    chrome.runtime.sendMessage({
-      type: 'UPDATE_SETTINGS',
-      payload: { simulationMode: toggleSimulation.checked }
-    });
-    loadState();
+    if (isExtensionRuntime) {
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_SETTINGS',
+        payload: { simulationMode: toggleSimulation.checked }
+      });
+      loadState();
+    } else {
+      currentSettings.simulationMode = toggleSimulation.checked;
+      loadState();
+    }
   });
 
   toggleAudio.addEventListener('change', () => {
-    chrome.runtime.sendMessage({
-      type: 'UPDATE_SETTINGS',
-      payload: { soundEffects: toggleAudio.checked }
-    });
+    if (isExtensionRuntime) {
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_SETTINGS',
+        payload: { soundEffects: toggleAudio.checked }
+      });
+    }
   });
 
   // 3. Keyword Match Tester

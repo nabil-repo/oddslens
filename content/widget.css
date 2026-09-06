@@ -245,6 +245,9 @@
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
 .side-title.up {
@@ -253,7 +256,7 @@
 
 .side-title.down {
   color: var(--down-color);
-  text-align: right;
+  justify-content: flex-end;
 }
 
 .side-odds-wrap {
@@ -574,7 +577,15 @@
 }
 
 .sentiment-icon {
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+}
+
+.sentiment-icon svg {
+  display: block;
 }
 
 /* Sentiment intensity bar */
@@ -638,7 +649,16 @@
 }
 
 .ai-card-icon {
-  font-size: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 12px;
+  color: #D8B4FE;
+}
+
+.ai-card-icon svg {
+  display: block;
 }
 
 .ai-source-badge {

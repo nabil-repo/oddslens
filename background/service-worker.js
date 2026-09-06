@@ -40,6 +40,22 @@ function createContextMenu() {
   });
 }
 
+// Helper to resolve real DreamDEX event contracts trading route
+function getMarketTradeUrl(m) {
+  if (m.targetTradeUrl && !m.targetTradeUrl.includes('/events?symbol=') && !m.targetTradeUrl.endsWith('/events')) {
+    return m.targetTradeUrl;
+  }
+  const asset = (m.asset || '').toUpperCase();
+  const symbol = (m.symbol || '').toUpperCase();
+  if (asset === 'BTC' || symbol.includes('BTC')) {
+    return 'https://app.dreamdex.io/event-contracts/WBTC:USDso/15m';
+  }
+  if (asset === 'ETH' || symbol.includes('ETH')) {
+    return 'https://app.dreamdex.io/event-contracts/WETH:USDso/15m';
+  }
+  return 'https://app.dreamdex.io/event-contracts';
+}
+
 // Initialize persistent storage
 async function initStorage() {
   const data = await chrome.storage.local.get(['markets', 'settings']);
@@ -47,15 +63,16 @@ async function initStorage() {
   if (!data.markets || !Array.isArray(data.markets) || data.markets.length === 0) {
     markets = DEFAULT_MARKETS.map(m => {
       const expiry = Math.floor(Date.now() / 1000) + (m.expiryOffsetSec || 14400);
-      // Build deep-link trade URL from symbol
-      const targetTradeUrl = m.symbol
-        ? `https://app.dreamdex.io/events?symbol=${encodeURIComponent(m.symbol)}`
-        : 'https://app.dreamdex.io';
-      return { ...m, expiry, targetTradeUrl };
+      return { ...m, expiry, targetTradeUrl: getMarketTradeUrl(m) };
     });
     await chrome.storage.local.set({ markets });
   } else {
-    markets = data.markets;
+    // Sanitize any existing cached markets that may have the obsolete /events?symbol= 404 URL
+    markets = data.markets.map(m => ({
+      ...m,
+      targetTradeUrl: getMarketTradeUrl(m)
+    }));
+    await chrome.storage.local.set({ markets });
   }
 
   if (!data.settings) {
@@ -389,10 +406,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     case 'RESET_DEFAULTS': {
       markets = DEFAULT_MARKETS.map(m => {
         const expiry = Math.floor(Date.now() / 1000) + (m.expiryOffsetSec || 14400);
-        const targetTradeUrl = m.symbol
-          ? `https://app.dreamdex.io/events?symbol=${encodeURIComponent(m.symbol)}`
-          : 'https://app.dreamdex.io';
-        return { ...m, expiry, targetTradeUrl };
+        return { ...m, expiry, targetTradeUrl: getMarketTradeUrl(m) };
       });
       settings = { ...DEFAULT_SETTINGS };
       chrome.storage.local.set({ markets, settings });
