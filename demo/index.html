@@ -24,6 +24,9 @@
       border: 1px solid rgba(121,40,202,0.4);
       color: #D8B4FE;
       letter-spacing: 0.3px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
     }
 
     /* Live Widget Preview Section */
@@ -127,27 +130,56 @@
         and NLP entity matching.
       </p>
       <div class="hub-header-actions">
-        <a href="https://github.com/your-username/oddslens" target="_blank" class="hub-action-btn primary">📂 GitHub Repo ↗</a>
-        <a href="../options/options.html" target="_blank" class="hub-action-btn secondary">⚙ Options Dashboard</a>
-        <a href="https://app.dreamdex.io" target="_blank" class="hub-action-btn secondary">🔗 DreamDEX App ↗</a>
+        <a href="https://github.com/your-username/oddslens" target="_blank" class="hub-action-btn primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg>
+          <span>GitHub Repo ↗</span>
+        </a>
+        <a href="../options/options.html" target="_blank" class="hub-action-btn secondary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+          <span>Options Dashboard</span>
+        </a>
+        <a href="https://app.dreamdex.io" target="_blank" class="hub-action-btn secondary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+          <span>DreamDEX App ↗</span>
+        </a>
       </div>
     </header>
 
     <!-- Live Widget Preview -->
     <div class="live-preview-section">
       <div class="preview-text">
-        <h2>✨ Live Widget Preview</h2>
+        <h2 style="display: flex; align-items: center; gap: 8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+            <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>
+          </svg>
+          <span>Live Widget Preview</span>
+        </h2>
         <p>
           This is the OddsLens widget exactly as it appears when injected on any page.
           Notice the real-time probability bar, sentiment badge, AI Market Insight card,
           and the direct Trade → DreamDEX deep-link button.
         </p>
         <div class="ai-feature-row">
-          <span class="ai-pill">📈 Sentiment Analysis</span>
-          <span class="ai-pill">🧠 NLP Matching</span>
-          <span class="ai-pill">✨ AI Insight</span>
-          <span class="ai-pill">⛓ Somnia Live</span>
-          <span class="ai-pill">⚡ &lt;100ms Latency</span>
+          <span class="ai-pill">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+            Sentiment Analysis
+          </span>
+          <span class="ai-pill">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"></path></svg>
+            NLP Matching
+          </span>
+          <span class="ai-pill">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/></svg>
+            AI Insight
+          </span>
+          <span class="ai-pill">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"></circle><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg>
+            Somnia Live
+          </span>
+          <span class="ai-pill">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            &lt;100ms Latency
+          </span>
         </div>
       </div>
       <div class="preview-widget-slot">
@@ -160,15 +192,19 @@
       <!-- Beat 1: Crypto News Page -->
       <div class="demo-card">
         <div class="card-tag tag-auto">Auto-Detect + AI Sentiment</div>
-        <div class="card-icon">⚡</div>
+        <div class="card-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+        </div>
         <h3>Crypto News Demo Page</h3>
         <p class="card-desc">
           Simulates a CoinDesk/Bloomberg breaking news article on Somnia throughput and Bitcoin milestones.
         </p>
         <div class="card-features">
-          <span>✓ Auto-detects <strong>SOMI TPS</strong> & <strong>BTC 100k</strong> contracts</span>
-          <span>✓ AI detects <strong>📈 BULLISH</strong> sentiment from article text</span>
-          <span>✓ Gemini AI generates one-sentence market insight</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent);flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>Auto-detects <strong>SOMI TPS</strong> & <strong>BTC 100k</strong> contracts</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent);flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>AI detects <strong>BULLISH</strong> sentiment from article text</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent);flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>Gemini AI generates one-sentence market insight</span>
         </div>
         <a href="crypto-article.html" class="demo-link-btn">Launch Crypto Article ↗</a>
       </div>
@@ -176,15 +212,20 @@
       <!-- Beat 2: Sports Recap Page -->
       <div class="demo-card">
         <div class="card-tag tag-auto">Auto-Detect + NLP Override</div>
-        <div class="card-icon">⚽</div>
+        <div class="card-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="7"></circle>
+            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+          </svg>
+        </div>
         <h3>Sports Recap Demo Page</h3>
         <p class="card-desc">
           Simulates an ESPN/Athletic recap for UEFA Champions League: Real Madrid vs Manchester City.
         </p>
         <div class="card-features">
-          <span>✓ Auto-detects <strong>UCL Final</strong> odds bar</span>
-          <span>✓ NLP extracts "Haaland", "Vinicius", "Guardiola" entities</span>
-          <span>✓ Shows contextual <strong>📈 BULLISH / 📉 BEARISH</strong> badge</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent);flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>Auto-detects <strong>UCL Final</strong> odds bar</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent);flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>NLP extracts "Haaland", "Vinicius", "Guardiola" entities</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent);flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>Shows contextual <strong>BULLISH / BEARISH</strong> badge</span>
         </div>
         <a href="sports-article.html" class="demo-link-btn">Launch Sports Article ↗</a>
       </div>
@@ -192,15 +233,24 @@
       <!-- Beat 3: Macro & Politics Page -->
       <div class="demo-card">
         <div class="card-tag tag-auto">Auto-Detect + Bearish Context</div>
-        <div class="card-icon">🏛</div>
+        <div class="card-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="3" y1="21" x2="21" y2="21"></line>
+            <line x1="6" y1="18" x2="6" y2="11"></line>
+            <line x1="10" y1="18" x2="10" y2="11"></line>
+            <line x1="14" y1="18" x2="14" y2="11"></line>
+            <line x1="18" y1="18" x2="18" y2="11"></line>
+            <polygon points="12 2 20 7 4 7"></polygon>
+          </svg>
+        </div>
         <h3>Macro & Rates Demo Page</h3>
         <p class="card-desc">
           Simulates a WSJ/Financial Times macro report on the Federal Reserve interest rate decision.
         </p>
         <div class="card-features">
-          <span>✓ Auto-detects <strong>Fed 50 bps Cut</strong> contract</span>
-          <span>✓ AI detects <strong>📉 BEARISH</strong> from "uncertainty", "risk" keywords</span>
-          <span>✓ NLP extracts "Jerome Powell", "FOMC", "basis points"</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent);flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>Auto-detects <strong>Fed 50 bps Cut</strong> contract</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent);flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>AI detects <strong>BEARISH</strong> from "uncertainty", "risk" keywords</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent);flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>NLP extracts "Jerome Powell", "FOMC", "basis points"</span>
         </div>
         <a href="macro-article.html" class="demo-link-btn">Launch Macro Article ↗</a>
       </div>
@@ -208,17 +258,21 @@
       <!-- Beat 4: AI Features & Options Dashboard -->
       <div class="demo-card highlight">
         <div class="card-tag tag-eco">AI Engine + Ecosystem Impact</div>
-        <div class="card-icon">✨</div>
+        <div class="card-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>
+          </svg>
+        </div>
         <h3>AI Configuration & Dashboard</h3>
         <p class="card-desc">
           Configure Gemini AI insights, manage event contract mappings, and test the NLP matcher.
           The key story for ecosystem extensibility and DreamDEX adoption.
         </p>
         <div class="card-features">
-          <span>✓ Set Gemini API key for AI-powered insights</span>
-          <span>✓ Add / edit live event contract mappings</span>
-          <span>✓ Live Matcher Sandbox — test any headline</span>
-          <span>✓ Import / Export manifest JSON</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent);flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>Set Gemini API key for AI-powered insights</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent);flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>Add / edit live event contract mappings</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent);flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>Live Matcher Sandbox — test any headline</span>
+          <span><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--accent);flex-shrink:0;"><polyline points="20 6 9 17 4 12"></polyline></svg>Import / Export manifest JSON</span>
         </div>
         <a href="../options/options.html" target="_blank" class="demo-link-btn primary">Open Options Dashboard ↗</a>
       </div>

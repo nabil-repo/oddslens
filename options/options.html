@@ -23,7 +23,12 @@
           <button class="btn btn-secondary" id="btn-export-json">⤓ Export JSON</button>
           <label class="btn btn-secondary" for="import-file">⤒ Import JSON</label>
           <input type="file" id="import-file" accept=".json" style="display: none;">
-          <a href="../demo/index.html" target="_blank" class="btn btn-primary">🎪 Open Demo Hub</a>
+          <a href="../demo/index.html" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"></polygon>
+            </svg>
+            <span>Open Demo Hub</span>
+          </a>
         </div>
       </div>
     </header>
@@ -98,7 +103,12 @@
       <!-- AI Configuration Card -->
       <section class="card" id="ai-config-card">
         <div class="card-header">
-          <h2>✨ AI Configuration (OpenRouter & Gemini)</h2>
+          <h2 style="display: flex; align-items: center; gap: 8px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+              <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>
+            </svg>
+            <span>AI Configuration (OpenRouter & Gemini)</span>
+          </h2>
           <span class="badge badge-accent">Multi-LLM</span>
         </div>
         <div class="card-body">
@@ -126,7 +136,12 @@
                 placeholder="sk-or-v1-... (OpenRouter) or AIzaSy... (Gemini)"
                 autocomplete="off"
               >
-              <button class="btn btn-secondary" id="btn-toggle-key-visibility" title="Show/hide key">👁</button>
+              <button class="btn btn-secondary" id="btn-toggle-key-visibility" title="Show/hide key" style="display: inline-flex; align-items: center; justify-content: center; padding: 0 10px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
               <button class="btn btn-primary" id="btn-test-ai-insight">Test Insight</button>
             </div>
             <div id="ai-test-result" class="sandbox-result hidden" style="margin-top: 10px;">
@@ -136,9 +151,13 @@
               </div>
               <p id="ai-test-text" style="font-size: 12px; color: var(--text-secondary); margin-top: 6px; font-style: italic;"></p>
             </div>
-            <p style="margin-top: 6px; font-size: 11px; color: var(--text-muted);">
-              ⚠ Keys are stored locally in <code>chrome.storage.local</code> and sent only to OpenRouter or Google APIs.
-              Get an OpenRouter key at <a href="https://openrouter.ai/keys" target="_blank" class="text-link">openrouter.ai/keys ↗</a> or Gemini at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-link">aistudio.google.com ↗</a>
+            <p style="margin-top: 6px; font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent); flex-shrink: 0;">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+              <span>Keys are stored locally in <code>chrome.storage.local</code> and sent only to OpenRouter or Google APIs.
+              Get an OpenRouter key at <a href="https://openrouter.ai/keys" target="_blank" class="text-link">openrouter.ai/keys ↗</a> or Gemini at <a href="https://aistudio.google.com/app/apikey" target="_blank" class="text-link">aistudio.google.com ↗</a></span>
             </p>
           </div>
 
@@ -195,7 +214,12 @@
       <div class="modal-window">
         <div class="modal-header">
           <h3 id="modal-heading">Add Event Contract</h3>
-          <button class="modal-close" id="btn-close-modal">✕</button>
+          <button class="modal-close" id="btn-close-modal" aria-label="Close modal">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
         </div>
         <form id="contract-form" class="modal-body">
           <input type="hidden" id="form-id">

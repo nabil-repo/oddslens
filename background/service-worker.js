@@ -34,7 +34,7 @@ function createContextMenu() {
   chrome.contextMenus.removeAll(() => {
     chrome.contextMenus.create({
       id: 'oddslens-check-odds',
-      title: "🔍 Check DreamDEX odds for '%s'",
+      title: "Check DreamDEX odds for '%s'",
       contexts: ['selection']
     });
   });

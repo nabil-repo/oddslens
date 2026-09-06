@@ -56,10 +56,10 @@ const server = http.createServer((req, res) => {
 
 server.listen(PORT, () => {
   console.log(`\n======================================================`);
-  console.log(`🚀 OddsLens Demo Server is live at: http://localhost:${PORT}`);
-  console.log(`🎪 Demo Hub:      http://localhost:${PORT}/demo/index.html`);
-  console.log(`⚡ Crypto News:   http://localhost:${PORT}/demo/crypto-article.html`);
-  console.log(`⚽ Sports News:   http://localhost:${PORT}/demo/sports-article.html`);
-  console.log(`🏛 Macro News:    http://localhost:${PORT}/demo/macro-article.html`);
+  console.log(`[OddsLens] Demo Server is live at: http://localhost:${PORT}`);
+  console.log(`[Demo Hub]     http://localhost:${PORT}/demo/index.html`);
+  console.log(`[Crypto News]  http://localhost:${PORT}/demo/crypto-article.html`);
+  console.log(`[Sports News]  http://localhost:${PORT}/demo/sports-article.html`);
+  console.log(`[Macro News]   http://localhost:${PORT}/demo/macro-article.html`);
   console.log(`======================================================\n`);
 });

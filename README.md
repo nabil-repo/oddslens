@@ -1,4 +1,4 @@
-# 🎯 OddsLens — Inline DreamDEX Odds Browser Extension
+# OddsLens — Inline DreamDEX Odds Browser Extension
 ### Somnia × DreamDEX Event Contracts Hackathon — Grand Prize Submission
 
 [![Somnia Network](https://img.shields.io/badge/Network-Somnia%20Shannon%20Testnet%20(50312)-7928CA?style=for-the-badge&logo=ethereum)](https://shannon-explorer.somnia.network)
@@ -36,7 +36,7 @@ To ensure the product is both commercially defensible and 100% dependable on cam
 
 1. **Manual Mode (Core, 100% Defensible):**
    - Select any text on **any webpage** (e.g. *"Bitcoin"*, *"Real Madrid"*, *"Jerome Powell"*).
-   - Right-click &rarr; select **"🔍 Check DreamDEX odds for this"**.
+   - Right-click &rarr; select **"Check DreamDEX odds for this"**.
    - OddsLens scores the selected text against the manifest and instantly mounts a broadcast-quality floating odds widget.
 2. **Curated Auto-Detect (Demo Highlight):**
    - On configured URL patterns (e.g. sports recaps, crypto news portals), OddsLens automatically recognizes the context on page load and slides in with real-time streaming odds.
@@ -47,10 +47,10 @@ To ensure the product is both commercially defensible and 100% dependable on cam
 
 | Hackathon Criterion | Weight | How OddsLens Delivers |
 |---|---|---|
-| **Innovation & Originality** | 20% | **Zero overlap** with existing submissions. Rather than another trading terminal or arbitrage bot, OddsLens builds outward distribution, transforming the entire web into an interactive DreamDEX storefront — enhanced with **client-side NLP entity extraction and Gemini 2.5 Flash trading synthesis**. |
-| **Technical Implementation** | 25% | Native Manifest V3 service worker, real DreamDEX WebSocket feed (`wss://stg.api.dreamdex.io/v0/ws/public`), Somnia Shannon RPC integration (`50312`), **Gemini 2.5 Flash API integration** (`generativelanguage.googleapis.com`), **AFINN-165 Sentiment Engine**, Shadow DOM CSS isolation, and a resilient Brownian-motion volatility streamer. |
-| **UX & Design** | 20% | Cyber dark-mode fintech aesthetic, dual-fill animated odds gauge, orderbook spread readout, **Open Interest (OI) metric**, **Settlement Urgency badge**, **AI Sentiment Pill** (`🟢 BULLISH` / `🔴 BEARISH`), **dynamic AI Insight card with typewriter reveal**, and quick bet calculator. |
-| **Business & Ecosystem Impact** | 20% | Directly drives net-new user acquisition and volume to DreamDEX from non-crypto web traffic. Includes an editable **Options Page** with Gemini API key configuration, publisher wallet attribution, and custom contract mappings. |
+| **Innovation & Originality** | 20% | **Zero overlap** with existing submissions. Rather than another trading terminal or arbitrage bot, OddsLens builds outward distribution, transforming the entire web into an interactive DreamDEX storefront — enhanced with **client-side NLP entity extraction and Gemini / OpenRouter AI trading synthesis**. |
+| **Technical Implementation** | 25% | Native Manifest V3 service worker, real DreamDEX WebSocket feed (`wss://stg.api.dreamdex.io/v0/ws/public`), Somnia Shannon RPC integration (`50312`), **OpenRouter & Gemini AI API integration**, **AFINN-165 Sentiment Engine**, Shadow DOM CSS isolation, and a resilient Brownian-motion volatility streamer. |
+| **UX & Design** | 20% | Cyber dark-mode fintech aesthetic, dual-fill animated odds gauge, orderbook spread readout, **Open Interest (OI) metric**, **Settlement Urgency badge**, **AI Sentiment Pill** (`BULLISH` / `BEARISH`), **dynamic AI Insight card with typewriter reveal**, and quick bet calculator. |
+| **Business & Ecosystem Impact** | 20% | Directly drives net-new user acquisition and volume to DreamDEX from non-crypto web traffic. Includes an editable **Options Page** with AI API key configuration, publisher wallet attribution, and custom contract mappings. |
 | **Presentation & Demo** | 15% | Rock-solid multi-beat demo (Manual Mode + Curated Auto-Detect + AI Insights) with built-in realistic demo articles and interactive Demo Hub for instant judging reproduction. |
 
 ---

@@ -359,7 +359,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       return { text: 'No key set', className: 'stat-value' };
     }
     const trimmed = key.trim();
-    const suffix = isLocal ? ' (Local) ✓' : ' ✓';
+    const suffix = isLocal ? ' (Local)' : '';
     if (trimmed.startsWith('sk-or-') || trimmed.startsWith('sk-')) {
       return { text: `OpenRouter Active${suffix}`, className: 'stat-value text-green' };
     }
@@ -462,7 +462,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           const src = response.insight.source;
           const isOR = src === 'openrouter';
           const isGem = src === 'gemini';
-          aiTestSource.textContent = isOR ? '⚡ OpenRouter AI' : (isGem ? '✨ Gemini AI' : '📊 AI Template');
+          aiTestSource.textContent = isOR ? 'OpenRouter AI' : (isGem ? 'Gemini AI' : 'AI Template');
           aiTestSource.style.color = (isOR || isGem) ? '#00F0FF' : '#00FF87';
           aiTestText.textContent = response.insight.text;
         }
@@ -477,7 +477,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const isOR = key.startsWith('sk-or-') || key.startsWith('sk-');
         const isGem = key.startsWith('AIza');
         const providerName = isOR ? 'OpenRouter' : (isGem ? 'Gemini' : 'AI');
-        aiTestSource.textContent = `📊 AI Template (Install extension for live ${providerName})`;
+        aiTestSource.textContent = `AI Template (Install extension for live ${providerName})`;
         aiTestSource.style.color = '#00FF87';
         aiTestText.textContent = `At ${Math.round((testMarket.probability || 0.5) * 100)}% probability, this market shows strong YES momentum — aligned with BULLISH article context.`;
       }, 600);
