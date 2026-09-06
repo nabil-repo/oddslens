@@ -116,6 +116,16 @@
       this.updateDynamicValues();
     }
 
+    setFeedStatus(status) {
+      const statusEl = this.shadowRoot?.querySelector('.live-data-pending');
+      if (!statusEl) return;
+      statusEl.textContent = status === 'UNSUPPORTED'
+        ? 'Live event-contract feed unavailable.'
+        : status === 'ERROR'
+          ? 'Live DreamDEX feed unavailable.'
+          : 'Waiting for live DreamDEX data...';
+    }
+
     playTickAudio(isUp) {
       try {
         if (!this.audioCtx) {

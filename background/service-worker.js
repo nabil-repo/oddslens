@@ -11,6 +11,9 @@ let dreamDexClient = null;
 let lastSomniaBlock = null;
 let blockPollInterval = null;
 let feedsInitialized = false;
+let localEventPollInterval = null;
+let localEventPollInFlight = false;
+const LOCAL_EVENT_API = 'http://localhost:3000/api/dreamdex';
 // Cache: marketId+probBucket → { text, source, ts }
 const insightCache = new Map();
 
@@ -150,8 +153,9 @@ function setupFeeds() {
   const symbols = markets.map(m => m.symbol).filter(Boolean);
   const hasEventContracts = symbols.length > 0 && symbols.every(symbol => /#(YES|NO)$/i.test(symbol));
   if (hasEventContracts) {
-    console.warn('[OddsLens] Live event-contract data requires the Markets SDK; skipping the spot WebSocket feed.');
-    dreamDexClient.updateStatus('UNSUPPORTED');
+    console.log('[OddsLens] Using local Markets SDK bridge for live event-contract data.');
+    dreamDexClient.updateStatus('CONNECTED');
+    startLocalEventFeed();
     startBlockPolling();
     return;
   }
@@ -161,6 +165,77 @@ function setupFeeds() {
 
   // Poll Somnia Shannon block number every 15 seconds
   startBlockPolling();
+}
+
+function extractBookPrice(level) {
+  if (Array.isArray(level)) return Number(level[0]);
+  if (level && typeof level === 'object') return Number(level.price);
+  return Number(level);
+}
+
+async function pollLocalEventFeed() {
+  if (localEventPollInFlight) return;
+  localEventPollInFlight = true;
+
+  try {
+    const marketsResponse = await fetch(`${LOCAL_EVENT_API}/event-markets`, { cache: 'no-store' });
+    if (!marketsResponse.ok) throw new Error(`event-markets returned ${marketsResponse.status}`);
+    const liveMarkets = await marketsResponse.json();
+
+    for (const curatedMarket of markets) {
+      const candidate = liveMarkets
+        .filter(market => market.asset === curatedMarket.asset)
+        .sort((a, b) => (b.expiry || 0) - (a.expiry || 0))[0];
+      if (!candidate) continue;
+
+      const bookResponse = await fetch(
+        `${LOCAL_EVENT_API}/event-orderbooks?symbol=${encodeURIComponent(candidate.symbol)}`,
+        { cache: 'no-store' }
+      );
+      if (!bookResponse.ok) continue;
+      const book = await bookResponse.json();
+      const bestBid = extractBookPrice(book.bids?.[0]);
+      const bestAsk = extractBookPrice(book.asks?.[0]);
+      const hasQuote = Number.isFinite(bestBid) && Number.isFinite(bestAsk);
+
+      curatedMarket.liveSymbol = candidate.symbol;
+      curatedMarket.title = candidate.title || curatedMarket.title;
+      curatedMarket.expiry = candidate.expiry || null;
+      curatedMarket.liveData = hasQuote;
+      curatedMarket.bestBid = hasQuote ? bestBid : null;
+      curatedMarket.bestAsk = hasQuote ? bestAsk : null;
+      curatedMarket.probability = hasQuote
+        ? Math.round(((bestBid + bestAsk) / 2) * 1000) / 1000
+        : null;
+
+      if (hasQuote) {
+        broadcastToTabs({
+          type: 'ODDS_UPDATE',
+          payload: {
+            marketId: curatedMarket.id,
+            symbol: curatedMarket.liveSymbol,
+            probability: curatedMarket.probability,
+            bestBid,
+            bestAsk,
+            source: 'somnia-markets-sdk'
+          }
+        });
+      }
+    }
+
+    broadcastToTabs({ type: 'MARKETS_CHANGED', markets });
+  } catch (error) {
+    console.warn('[OddsLens] Local event bridge unavailable:', error.message);
+    dreamDexClient.updateStatus('ERROR');
+  } finally {
+    localEventPollInFlight = false;
+  }
+}
+
+function startLocalEventFeed() {
+  if (localEventPollInterval) clearInterval(localEventPollInterval);
+  pollLocalEventFeed();
+  localEventPollInterval = setInterval(pollLocalEventFeed, 10000);
 }
 
 // ─── Somnia Block Polling ─────────────────────────────────────────────────────

@@ -30,6 +30,7 @@
   ],
   "host_permissions": [
     "<all_urls>",
+    "http://localhost:3000/*",
     "https://generativelanguage.googleapis.com/*",
     "https://openrouter.ai/*"
   ],

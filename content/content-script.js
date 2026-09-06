@@ -209,6 +209,14 @@
         break;
       }
 
+      case 'DEX_STATUS_CHANGE': {
+        const widget = activeWidget || document.querySelector('odds-lens-overlay');
+        if (widget && document.body.contains(widget) && typeof widget.setFeedStatus === 'function') {
+          widget.setFeedStatus(message.status);
+        }
+        break;
+      }
+
       case 'SETTINGS_CHANGED': {
         const widget = activeWidget || document.querySelector('odds-lens-overlay');
         if (widget && document.body.contains(widget)) {
