@@ -16,6 +16,8 @@ export class DreamDexClient {
     this.onStatusChangeCallback = null;
     this.onMarketsCallback = null; // Called when live binary markets list is received
     this.seenChannels = new Set();
+    this.lastMessageAt = 0;
+    this.dataWatchdog = null;
   }
 
   setUpdateCallback(fn) {
@@ -52,7 +54,9 @@ export class DreamDexClient {
       this.ws.onopen = () => {
         this.updateStatus('CONNECTED');
         this.reconnectDelay = 2000;
+        this.lastMessageAt = Date.now();
         this.startHeartbeat();
+        this.startDataWatchdog();
 
         // Subscribe to live binary markets discovery feed
         this.subscribeMarkets();
@@ -80,6 +84,7 @@ export class DreamDexClient {
       this.ws.onclose = (e) => {
         this.updateStatus('DISCONNECTED');
         this.stopHeartbeat();
+        this.stopDataWatchdog();
         this.scheduleReconnect();
       };
     } catch (err) {
@@ -105,6 +110,33 @@ export class DreamDexClient {
     }
   }
 
+  startDataWatchdog() {
+    this.stopDataWatchdog();
+    this.dataWatchdog = setInterval(() => {
+      if (this.status === 'CONNECTED' && Date.now() - this.lastMessageAt > 15000) {
+        console.warn('[DreamDexClient] Connected but no market-data messages received in 15s');
+        this.updateStatus('ERROR');
+        this.stopDataWatchdog();
+        this.stopHeartbeat();
+        if (this.ws) {
+          try {
+            this.ws.close(4000, 'No market data received');
+          } catch (e) {
+            this.ws = null;
+          }
+        }
+        this.scheduleReconnect();
+      }
+    }, 5000);
+  }
+
+  stopDataWatchdog() {
+    if (this.dataWatchdog) {
+      clearInterval(this.dataWatchdog);
+      this.dataWatchdog = null;
+    }
+  }
+
   scheduleReconnect() {
     if (this.reconnectTimer) return;
     console.log(`[DreamDexClient] Reconnecting in ${this.reconnectDelay}ms...`);
@@ -121,6 +153,7 @@ export class DreamDexClient {
       this.reconnectTimer = null;
     }
     this.stopHeartbeat();
+    this.stopDataWatchdog();
     if (this.ws) {
       try {
         this.ws.close();
@@ -133,6 +166,14 @@ export class DreamDexClient {
   subscribe(symbols) {
     const list = Array.isArray(symbols) ? symbols : [symbols];
     list.forEach(s => this.subscriptions.add(s));
+
+    const eventContractSymbols = list.filter(symbol => /#(YES|NO)$/i.test(symbol));
+    if (eventContractSymbols.length > 0) {
+      console.warn('[DreamDexClient] Event-contract symbols are not supported by the public spot WebSocket feed:', eventContractSymbols);
+      this.stopDataWatchdog();
+      this.updateStatus('UNSUPPORTED');
+      return;
+    }
 
     if (this.ws && this.ws.readyState === WebSocket.OPEN && list.length > 0) {
       const msg = {
@@ -150,20 +191,24 @@ export class DreamDexClient {
    */
   subscribeMarkets() {
     if (this.ws && this.ws.readyState === WebSocket.OPEN) {
-      // Request all available binary/event contract markets
-      this.ws.send(JSON.stringify({ operation: 'subscribe', channel: 'markets', params: {} }));
-      // Also request ticker feed for all known symbols to get current probabilities
-      this.ws.send(JSON.stringify({ operation: 'subscribe', channel: 'ticker', params: {} }));
+      // The public feed supports orderbook, ohlcv, trades, and order channels.
+      // Market discovery and ticker are not valid subscription channels.
     }
   }
 
   handleMessage(data) {
+    this.lastMessageAt = Date.now();
     if (data.channel && !this.seenChannels.has(data.channel)) {
       this.seenChannels.add(data.channel);
       console.log(`[DreamDexClient] Received channel: ${data.channel}`);
     }
 
     if (data.operation === 'pong') {
+      return;
+    }
+
+    if (data.type === 'error') {
+      console.warn(`[DreamDexClient] Feed error: ${data.errorName || 'unknown'}: ${data.message || 'no message'}`);
       return;
     }
 
@@ -180,41 +225,22 @@ export class DreamDexClient {
       }
     }
 
-    // Process ticker updates (price snapshots for all markets)
-    if (data.channel === 'ticker' && data.data) {
-      const tickers = Array.isArray(data.data) ? data.data : [data.data];
-      for (const t of tickers) {
-        if (t.symbol?.includes('#YES') || t.symbol?.includes('#NO')) {
-          if (this.onUpdateCallback) {
-            this.onUpdateCallback({
-              type: 'TICKER_UPDATE',
-              symbol: t.symbol,
-              lastPrice: t.lastPrice !== undefined ? Number(t.lastPrice) : null,
-              bestBid: t.bestBid !== undefined ? Number(t.bestBid) : null,
-              bestAsk: t.bestAsk !== undefined ? Number(t.bestAsk) : null,
-              volume24h: t.volume24h !== undefined ? Number(t.volume24h) : null,
-              raw: t,
-            });
-          }
-        }
-      }
-    }
-
     // Process orderbook snapshots and incremental updates
-    if (data.channel === 'orderbook' && data.data) {
-      const { symbol, bids, asks } = data.data;
-      const bestBid = bids && bids[0] ? Number(bids[0][0]) : null;
-      const bestAsk = asks && asks[0] ? Number(asks[0][0]) : null;
+    if (data.channel === 'orderbook' && data.symbol) {
+      const bids = Array.isArray(data.bids) ? data.bids : [];
+      const asks = Array.isArray(data.asks) ? data.asks : [];
+      const bestBid = bids[0]?.price !== undefined ? Number(bids[0].price) : null;
+      const bestAsk = asks[0]?.price !== undefined ? Number(asks[0].price) : null;
 
       if (this.onUpdateCallback) {
         this.onUpdateCallback({
           type: 'ORDERBOOK_UPDATE',
-          symbol,
+          symbol: data.symbol,
           bestBid,
           bestAsk,
           bids,
           asks,
-          raw: data.data
+          raw: data
         });
       }
     }

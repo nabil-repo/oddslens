@@ -10,6 +10,7 @@ let settings = { ...DEFAULT_SETTINGS };
 let dreamDexClient = null;
 let lastSomniaBlock = null;
 let blockPollInterval = null;
+let feedsInitialized = false;
 // Cache: marketId+probBucket → { text, source, ts }
 const insightCache = new Map();
 
@@ -119,6 +120,9 @@ async function initStorage() {
 
 // Setup the real DreamDEX WebSocket client and Somnia RPC polling.
 function setupFeeds() {
+  if (feedsInitialized) return;
+  feedsInitialized = true;
+
   const currentNetwork = SOMNIA_NETWORKS[settings.network] || SOMNIA_NETWORKS.testnet;
 
   // Real WebSocket client
@@ -143,8 +147,16 @@ function setupFeeds() {
     });
   }
 
-  dreamDexClient.connect();
   const symbols = markets.map(m => m.symbol).filter(Boolean);
+  const hasEventContracts = symbols.length > 0 && symbols.every(symbol => /#(YES|NO)$/i.test(symbol));
+  if (hasEventContracts) {
+    console.warn('[OddsLens] Live event-contract data requires the Markets SDK; skipping the spot WebSocket feed.');
+    dreamDexClient.updateStatus('UNSUPPORTED');
+    startBlockPolling();
+    return;
+  }
+
+  dreamDexClient.connect();
   dreamDexClient.subscribe(symbols);
 
   // Poll Somnia Shannon block number every 15 seconds
@@ -208,7 +220,10 @@ function handleRealFeedUpdate(update) {
     symbol.startsWith(m.symbol?.split('#')[0] || '')
   );
 
-  if (!targetMarket) return;
+  if (!targetMarket) {
+    console.warn('[OddsLens] Live update symbol did not match a configured market:', symbol);
+    return;
+  }
 
   const hasLastPrice = Number.isFinite(update.lastPrice);
   const hasOrderbook = Number.isFinite(update.bestBid) && Number.isFinite(update.bestAsk);

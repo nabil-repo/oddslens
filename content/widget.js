@@ -61,7 +61,9 @@
       this.render();
       this.startCountdown();
       // Request AI insight asynchronously after render
-      this.fetchAiInsight();
+      if (this.market.liveData === true) {
+        this.fetchAiInsight();
+      }
     }
 
     pulseHighlight() {

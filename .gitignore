@@ -26,3 +26,5 @@ Thumbs.db
 # Local scripts & drafts
 scripts/*.js
 docs/
+
+*.tgz
