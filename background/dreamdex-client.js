@@ -249,9 +249,11 @@ export class DreamDexClient {
    * Build a deep-link URL to the specific market on DreamDEX.
    */
   buildTradeUrl(symbol) {
-    if (!symbol) return this.dexBaseUrl;
-    const upSymbol = symbol.includes('#YES') ? symbol : `${symbol}#YES`;
-    return `${this.dexBaseUrl}/events?symbol=${encodeURIComponent(upSymbol)}`;
+    if (!symbol) return `${this.dexBaseUrl}/event-contracts`;
+    const s = symbol.toUpperCase();
+    if (s.includes('BTC')) return `${this.dexBaseUrl}/event-contracts/WBTC:USDso/15m`;
+    if (s.includes('ETH')) return `${this.dexBaseUrl}/event-contracts/WETH:USDso/15m`;
+    return `${this.dexBaseUrl}/event-contracts`;
   }
 
   inferCategory(asset) {
