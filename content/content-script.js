@@ -120,13 +120,12 @@
     activeWidget.isMinimized = false;
 
     // Immediately initialize and display the widget (instant 0ms response)
+    const effectiveFeedStatus = meta.feedStatus || market.feedStatus || null;
     if (activeWidget.init) {
-      activeWidget.init(market, { ...meta, headline });
+      activeWidget.init(market, { ...meta, headline, feedStatus: effectiveFeedStatus });
     }
-    if (market.feedStatus && typeof activeWidget.setFeedStatus === 'function') {
-      activeWidget.setFeedStatus(market.feedStatus);
-    } else if (meta.feedStatus && typeof activeWidget.setFeedStatus === 'function') {
-      activeWidget.setFeedStatus(meta.feedStatus);
+    if (effectiveFeedStatus && typeof activeWidget.setFeedStatus === 'function') {
+      activeWidget.setFeedStatus(effectiveFeedStatus);
     }
     activeWidget.style.display = 'block';
     activeWidget.style.opacity = '1';
@@ -151,6 +150,7 @@
             ...meta,
             aiAnalysis: analysis,
             headline,
+            feedStatus: nlpBest.feedStatus || effectiveFeedStatus,
             candidates: [{ id: market.id, title: market.title }, ...(analysis.nlpMatch.candidates || [])]
           });
           return;
@@ -225,7 +225,7 @@
 
       case 'EVENT_FEED_STATUS': {
         const widget = activeWidget || document.querySelector('odds-lens-overlay');
-        if (widget && document.body.contains(widget) && widget.market?.id === message.marketId && typeof widget.setFeedStatus === 'function') {
+        if (widget && document.body.contains(widget) && (widget.market?.id === message.marketId || !message.marketId) && typeof widget.setFeedStatus === 'function') {
           widget.setFeedStatus(message.status);
         }
         break;

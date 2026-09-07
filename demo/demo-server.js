@@ -38,34 +38,56 @@ async function proxyDreamDex(pathname, query) {
   return { status: response.status, contentType: response.headers.get('content-type') || 'application/json', body };
 }
 
+let marketsLoadPromise = null;
+
 async function loadBinaryMarkets() {
-  if (eventMarketsCache.expiresAt > Date.now()) return eventMarketsCache.markets;
+  if (eventMarketsCache.expiresAt > Date.now() && eventMarketsCache.markets.length > 0) {
+    return eventMarketsCache.markets;
+  }
+  if (marketsLoadPromise) {
+    return marketsLoadPromise;
+  }
 
-  const markets = await eventExchange.loadMarkets(true);
-  const binaryMarkets = Object.values(markets)
-    .filter(market => market.type === 'binary' && market.info?.status === 'Trading')
-    .map(market => ({
-      id: market.id,
-      symbol: market.symbol,
-      title: market.info.question,
-      asset: market.info.asset,
-      interval: market.info.interval,
-      intervalSec: Number(market.info.intervalSec),
-      expiry: Number(market.info.expiry),
-      outcomes: market.outcomes,
-      active: market.active,
-      source: 'somnia-markets-sdk'
-    }));
+  marketsLoadPromise = (async () => {
+    try {
+      const markets = await eventExchange.loadMarkets(true);
+      const binaryMarkets = Object.values(markets)
+        .filter(market => market.type === 'binary' && market.info?.status === 'Trading')
+        .map(market => ({
+          id: market.id,
+          symbol: market.symbol,
+          title: market.info.question,
+          asset: market.info.asset,
+          interval: market.info.interval,
+          intervalSec: Number(market.info.intervalSec),
+          expiry: Number(market.info.expiry),
+          outcomes: market.outcomes,
+          active: market.active,
+          source: 'somnia-markets-sdk'
+        }));
 
-  eventMarketsCache = { expiresAt: Date.now() + 10000, markets: binaryMarkets };
-  return binaryMarkets;
+      eventMarketsCache = { expiresAt: Date.now() + 60000, markets: binaryMarkets };
+      return binaryMarkets;
+    } finally {
+      marketsLoadPromise = null;
+    }
+  })();
+
+  return marketsLoadPromise;
 }
 
 async function loadBinaryOrderbook(symbol) {
   if (!symbol) {
     throw new Error('Missing binary market symbol');
   }
-  return eventExchange.fetchOrderBook(symbol, 10);
+  // Ensure markets metadata is loaded for symbol resolution
+  if (!eventExchange.markets || Object.keys(eventExchange.markets).length === 0) {
+    await loadBinaryMarkets();
+  }
+  const timeout = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(`Orderbook query timeout for ${symbol}`)), 8000)
+  );
+  return Promise.race([eventExchange.fetchOrderBook(symbol, 10), timeout]);
 }
 
 function sendJson(res, status, payload, contentType = 'application/json; charset=utf-8') {
@@ -75,7 +97,15 @@ function sendJson(res, status, payload, contentType = 'application/json; charset
     'Access-Control-Allow-Origin': '*',
     'Cache-Control': 'no-store'
   });
-  res.end(typeof payload === 'string' ? payload : JSON.stringify(payload));
+  try {
+    const body = typeof payload === 'string'
+      ? payload
+      : JSON.stringify(payload, (_, value) => (typeof value === 'bigint' ? value.toString() : value));
+    res.end(body);
+  } catch (err) {
+    console.error('[OddsLens Server] sendJson serialization error:', err.message);
+    res.end(JSON.stringify({ error: 'serialization_error', message: err.message }));
+  }
 }
 
 const server = http.createServer((req, res) => {
@@ -95,14 +125,16 @@ const server = http.createServer((req, res) => {
   }
 
   if (reqUrl === '/api/dreamdex/event-markets' || reqUrl === '/api/dreamdex/event-orderbooks') {
+    const symbolParam = requestUrl.searchParams.get('symbol');
     const operation = reqUrl.endsWith('/event-markets')
       ? loadBinaryMarkets()
-      : loadBinaryOrderbook(requestUrl.searchParams.get('symbol'));
+      : loadBinaryOrderbook(symbolParam);
     operation
       .then(body => {
         sendJson(res, 200, body);
       })
       .catch(error => {
+        console.warn(`[OddsLens Server] ${reqUrl} error (${symbolParam || 'all'}):`, error.message);
         sendJson(res, 502, { error: 'event_market_unavailable', message: error.message });
       });
     return;
@@ -148,4 +180,10 @@ server.listen(PORT, () => {
   console.log(`[Sports News]  http://localhost:${PORT}/demo/sports-article.html`);
   console.log(`[Macro News]   http://localhost:${PORT}/demo/macro-article.html`);
   console.log(`======================================================\n`);
+
+  loadBinaryMarkets().then(m => {
+    console.log(`[OddsLens] Warmed up binary markets cache: ${m.length} markets ready.`);
+  }).catch(err => {
+    console.warn(`[OddsLens] Binary markets warmup error:`, err.message);
+  });
 });

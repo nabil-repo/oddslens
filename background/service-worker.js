@@ -173,21 +173,27 @@ function extractBookPrice(level) {
   return Number(level);
 }
 
+function fetchWithTimeout(url, options = {}, timeoutMs = 5000) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal })
+    .finally(() => clearTimeout(timeoutId));
+}
+
 async function pollLocalEventFeed() {
   if (localEventPollInFlight) return;
   localEventPollInFlight = true;
 
   try {
-    const marketsResponse = await fetch(`${LOCAL_EVENT_API}/event-markets`, { cache: 'no-store' });
+    const marketsResponse = await fetchWithTimeout(`${LOCAL_EVENT_API}/event-markets`, { cache: 'no-store' }, 8000);
     if (!marketsResponse.ok) throw new Error(`event-markets returned ${marketsResponse.status}`);
     const liveMarkets = await marketsResponse.json();
     console.log(`[OddsLens] Local bridge returned ${liveMarkets.length} live binary markets.`);
 
-    for (const curatedMarket of markets) {
-      const candidate = liveMarkets
-        .filter(market => market.asset === curatedMarket.asset)
-        .sort((a, b) => (b.expiry || 0) - (a.expiry || 0))[0];
-      if (!candidate) {
+    await Promise.all(markets.map(async (curatedMarket) => {
+      const candidates = liveMarkets.filter(market => market.asset === curatedMarket.asset);
+
+      if (!candidates || candidates.length === 0) {
         curatedMarket.feedStatus = 'NO_MARKET';
         console.log(`[OddsLens] No live binary market is currently available for ${curatedMarket.asset}.`);
         broadcastToTabs({
@@ -195,51 +201,78 @@ async function pollLocalEventFeed() {
           marketId: curatedMarket.id,
           status: 'NO_MARKET'
         });
-        continue;
+        return;
       }
 
-      const bookResponse = await fetch(
-        `${LOCAL_EVENT_API}/event-orderbooks?symbol=${encodeURIComponent(candidate.symbol)}`,
-        { cache: 'no-store' }
-      );
-      if (!bookResponse.ok) continue;
-      const book = await bookResponse.json();
-      const bestBid = extractBookPrice(book.bids?.[0]);
-      const bestAsk = extractBookPrice(book.asks?.[0]);
-      const hasQuote = Number.isFinite(bestBid) && Number.isFinite(bestAsk);
+      // Prefer active trading markets, then sort by highest expiry
+      const candidate = candidates.sort((a, b) => {
+        if (Boolean(a.active) !== Boolean(b.active)) return a.active ? -1 : 1;
+        return (b.expiry || 0) - (a.expiry || 0);
+      })[0];
 
-      curatedMarket.liveSymbol = candidate.symbol;
-      curatedMarket.title = candidate.title || curatedMarket.title;
-      curatedMarket.expiry = candidate.expiry || null;
-      curatedMarket.liveData = hasQuote;
-      curatedMarket.feedStatus = hasQuote ? 'LIVE' : 'NO_LIQUIDITY';
-      curatedMarket.bestBid = hasQuote ? bestBid : null;
-      curatedMarket.bestAsk = hasQuote ? bestAsk : null;
-      curatedMarket.probability = hasQuote
-        ? Math.round(((bestBid + bestAsk) / 2) * 1000) / 1000
-        : null;
+      try {
+        const bookResponse = await fetchWithTimeout(
+          `${LOCAL_EVENT_API}/event-orderbooks?symbol=${encodeURIComponent(candidate.symbol)}`,
+          { cache: 'no-store' },
+          4000
+        );
 
-      console.log(`[OddsLens] ${curatedMarket.asset} bridge market ${candidate.symbol}: ${hasQuote ? `bid ${bestBid}, ask ${bestAsk}` : 'no resting liquidity'}`);
-      broadcastToTabs({
-        type: 'EVENT_FEED_STATUS',
-        marketId: curatedMarket.id,
-        status: curatedMarket.feedStatus
-      });
-
-      if (hasQuote) {
-        broadcastToTabs({
-          type: 'ODDS_UPDATE',
-          payload: {
+        if (!bookResponse.ok) {
+          curatedMarket.feedStatus = 'NO_LIQUIDITY';
+          broadcastToTabs({
+            type: 'EVENT_FEED_STATUS',
             marketId: curatedMarket.id,
-            symbol: curatedMarket.liveSymbol,
-            probability: curatedMarket.probability,
-            bestBid,
-            bestAsk,
-            source: 'somnia-markets-sdk'
-          }
+            status: 'NO_LIQUIDITY'
+          });
+          return;
+        }
+
+        const book = await bookResponse.json();
+        const bestBid = extractBookPrice(book.bids?.[0]);
+        const bestAsk = extractBookPrice(book.asks?.[0]);
+        const hasQuote = Number.isFinite(bestBid) && Number.isFinite(bestAsk);
+
+        curatedMarket.liveSymbol = candidate.symbol;
+        curatedMarket.title = candidate.title || curatedMarket.title;
+        curatedMarket.expiry = candidate.expiry || null;
+        curatedMarket.liveData = hasQuote;
+        curatedMarket.feedStatus = hasQuote ? 'LIVE' : 'NO_LIQUIDITY';
+        curatedMarket.bestBid = hasQuote ? bestBid : null;
+        curatedMarket.bestAsk = hasQuote ? bestAsk : null;
+        curatedMarket.probability = hasQuote
+          ? Math.round(((bestBid + bestAsk) / 2) * 1000) / 1000
+          : null;
+
+        console.log(`[OddsLens] ${curatedMarket.asset} bridge market ${candidate.symbol}: ${hasQuote ? `bid ${bestBid}, ask ${bestAsk}` : 'no resting liquidity'}`);
+        broadcastToTabs({
+          type: 'EVENT_FEED_STATUS',
+          marketId: curatedMarket.id,
+          status: curatedMarket.feedStatus
+        });
+
+        if (hasQuote) {
+          broadcastToTabs({
+            type: 'ODDS_UPDATE',
+            payload: {
+              marketId: curatedMarket.id,
+              symbol: curatedMarket.liveSymbol,
+              probability: curatedMarket.probability,
+              bestBid,
+              bestAsk,
+              source: 'somnia-markets-sdk'
+            }
+          });
+        }
+      } catch (bookErr) {
+        console.warn(`[OddsLens] Orderbook fetch failed for ${curatedMarket.asset}:`, bookErr.message);
+        curatedMarket.feedStatus = 'NO_LIQUIDITY';
+        broadcastToTabs({
+          type: 'EVENT_FEED_STATUS',
+          marketId: curatedMarket.id,
+          status: 'NO_LIQUIDITY'
         });
       }
-    }
+    }));
 
     broadcastToTabs({ type: 'MARKETS_CHANGED', markets });
   } catch (error) {

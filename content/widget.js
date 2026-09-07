@@ -55,13 +55,18 @@
     init(market, meta = {}) {
       this.market = { ...market };
       this.meta = { ...meta };
+      if (meta.feedStatus) {
+        this.feedStatus = meta.feedStatus;
+      } else if (market.feedStatus) {
+        this.feedStatus = market.feedStatus;
+      }
       this.betAmount = meta.defaultBetAmount || 10;
       this.isMinimized = false; // Always restore from minimized state on new init
       this.aiInsight = null; // reset on new market
       this.render();
       this.startCountdown();
       // Request AI insight asynchronously after render
-      if (this.market.liveData === true) {
+      if (this.market.liveData === true || Number.isFinite(this.market.probability)) {
         this.fetchAiInsight();
       }
     }
@@ -116,18 +121,25 @@
       this.updateDynamicValues();
     }
 
+    getFeedStatusText(status) {
+      const s = status || this.feedStatus || this.market?.feedStatus;
+      return s === 'UNSUPPORTED'
+        ? 'Live event-contract feed unavailable.'
+        : s === 'NO_MARKET'
+          ? 'No live market is available for this topic on Somnia Testnet.'
+          : s === 'NO_LIQUIDITY'
+            ? 'Live market found, but no orders are currently available.'
+            : s === 'ERROR'
+              ? 'Live DreamDEX feed unavailable.'
+              : 'Waiting for live DreamDEX data...';
+    }
+
     setFeedStatus(status) {
+      this.feedStatus = status;
+      if (this.market) this.market.feedStatus = status;
       const statusEl = this.shadowRoot?.querySelector('.live-data-pending');
       if (!statusEl) return;
-      statusEl.textContent = status === 'UNSUPPORTED'
-        ? 'Live event-contract feed unavailable.'
-        : status === 'NO_MARKET'
-          ? 'No live market is available for this topic.'
-        : status === 'NO_LIQUIDITY'
-          ? 'Live market found, but no orders are currently available.'
-        : status === 'ERROR'
-          ? 'Live DreamDEX feed unavailable.'
-          : 'Waiting for live DreamDEX data...';
+      statusEl.textContent = this.getFeedStatusText(status);
     }
 
     playTickAudio(isUp) {
@@ -205,7 +217,10 @@
         ? chrome.runtime.getURL('content/widget.css')
         : (window.location.pathname.includes('/demo/') ? '../content/widget.css' : '/content/widget.css');
 
-      if (this.market.liveData !== true) {
+      const hasLiveData = this.market.liveData === true || (Number.isFinite(this.market.probability) && this.market.probability > 0);
+
+      if (!hasLiveData) {
+        const statusMsg = this.getFeedStatusText(this.feedStatus || this.market.feedStatus);
         this.shadowRoot.innerHTML = `
           <link rel="stylesheet" href="${cssUrl}">
           <div class="oddslens-container" role="dialog" aria-label="DreamDEX Odds Widget">
@@ -216,7 +231,7 @@
             <div class="oddslens-body">
               <div class="event-meta"><span class="category-pill">${this.market.category || 'Prediction'}</span></div>
               <h3>${this.market.title || 'Event contract'}</h3>
-              <p class="live-data-pending">Waiting for live DreamDEX data...</p>
+              <p class="live-data-pending">${statusMsg}</p>
             </div>
           </div>
         `;
