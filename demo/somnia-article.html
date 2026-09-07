@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Somnia Shannon Testnet Shatters Records at 100,000 TPS as Prediction Markets Scale — Layer1 Insider</title>
+  <script>
+    // Ensure demo pages are viewed on hosted origin (localhost / Vercel) so Chrome MV3 content scripts run
+    if (window.location.protocol === 'chrome-extension:') {
+      try {
+        if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+          chrome.storage.local.get(['settings'], (data) => {
+            const baseUrl = (data?.settings?.demoServerUrl || 'http://localhost:3000').replace(/\/$/, '');
+            const demoPath = window.location.pathname.replace(/^.*\/demo\//, '/demo/');
+            window.location.replace(`${baseUrl}${demoPath}`);
+          });
+        } else {
+          const demoPath = window.location.pathname.replace(/^.*\/demo\//, '/demo/');
+          window.location.replace(`http://localhost:3000${demoPath}`);
+        }
+      } catch (e) {
+        window.location.replace('http://localhost:3000/demo/somnia-article.html');
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="article.css">
+</head>
+
+<body>
+  <!-- Header Bar -->
+  <nav class="pub-nav">
+    <div class="pub-nav-inner">
+      <div class="pub-brand">LAYER1<span>INSIDER</span></div>
+      <div class="pub-nav-links">
+        <a href="index.html" class="nav-back-hub" style="color: #00FF87; font-weight: 600;">← Demo Hub</a>
+        <a href="#">Throughput</a>
+        <a href="#">Validators</a>
+        <a href="#">DApps</a>
+        <a href="#">Testnets</a>
+      </div>
+      <div class="pub-status">● SHANNON TESTNET: 100k TPS</div>
+    </div>
+  </nav>
+
+  <main class="article-container">
+    <!-- Breadcrumb & Tag -->
+    <div class="article-meta-top">
+      <span class="meta-tag">BLOCKCHAIN INFRASTRUCTURE</span>
+      <span class="meta-date">September 6, 2026 • 4 min read</span>
+    </div>
+
+    <h1 class="article-headline">
+      Somnia Shannon Testnet Shatters Records at 100,000 TPS as High-Speed Event Contracts Scale
+    </h1>
+
+    <p class="article-lead">
+      Stress tests on Somnia's EVM-compatible Layer 1 validate sub-second block times and massive transaction density, 
+      paving the way for real-time consumer prediction markets.
+    </p>
+
+    <!-- Author & Share -->
+    <div class="author-row">
+      <div class="author-avatar">MS</div>
+      <div class="author-info">
+        <span class="author-name">Marcus Sterling</span>
+        <span class="author-role">Infrastructure Architect</span>
+      </div>
+    </div>
+
+    <!-- Article Body -->
+    <article class="article-content">
+      <!-- Demo Callout Box -->
+      <div class="demo-callout">
+        <div class="callout-badge">OddsLens Live Demo Playground</div>
+        <p>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px; display: inline-block;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          <strong>How to test OddsLens on this Somnia TPS page:</strong><br>
+          • <strong>Auto-Detect:</strong> If the OddsLens extension is installed, the widget slides in automatically with live SOMI testnet milestone contracts.<br>
+          • <strong>Manual Mode:</strong> Highlight text below (such as <mark>Somnia TPS</mark> or <mark>Shannon Testnet</mark>), right-click, and select <em>"Check DreamDEX odds for this"</em>.
+        </p>
+      </div>
+
+      <p>
+        In what marks a defining technical milestone for high-performance decentralized systems, the <mark class="match-hint">Somnia</mark>
+        engineering team announced today that the <mark class="match-hint">Shannon Testnet</mark> has sustained execution benchmarks
+        exceeding <mark class="match-hint">100,000 TPS</mark> under intense parallel workload.
+      </p>
+
+      <p>
+        The breakthrough stems from Somnia’s innovative Multi-Stream consensus and custom EVM bytecode compiler, which
+        eliminates single-threaded execution bottlenecks while retaining full compatibility with Solidity smart contracts.
+      </p>
+
+      <h2>DreamDEX Liquidity Surges on Fast Finality</h2>
+      <p>
+        The primary beneficiary of this throughput is <mark class="match-hint">DreamDEX</mark>, the native Central Limit Order Book protocol.
+        While conventional decentralized exchanges are hindered by 12-second block intervals, DreamDEX matches orders in real-time.
+      </p>
+
+      <p>
+        Binary event contracts on Somnia ecosystem milestones have seen rapid trader adoption. Market participants are
+        actively trading directional contracts on whether network TPS will hold above 100k during upcoming validator epochs.
+      </p>
+
+      <blockquote>
+        "Consumer applications — whether inline browser lenses, social betting bots, or gaming settlement — require true real-time performance.
+        Somnia delivers that speed on-chain," noted a core validator.
+      </blockquote>
+
+      <h2>Distribution via OddsLens</h2>
+      <p>
+        By integrating with OddsLens, readers following Somnia ecosystem developments can instantly view real-time market odds
+        and testnet block confirmations directly within the article, transforming passive reading into active ecosystem engagement.
+      </p>
+    </article>
+  </main>
+
+  <!-- Standalone Demo Fallback -->
+  <script type="module">
+    import '../content/widget.js';
+    import { DEFAULT_MARKETS } from '../background/manifest-data.js';
+
+    setTimeout(() => {
+      if (!document.querySelector('odds-lens-overlay')) {
+        console.log('[Demo Standalone] Initializing standalone OddsLens widget for Somnia TPS preview');
+        const widget = document.createElement('odds-lens-overlay');
+        document.body.appendChild(widget);
+        const somiMarket = DEFAULT_MARKETS.find(m => m.id === 'market-somi-tps') || DEFAULT_MARKETS[1];
+        widget.init(somiMarket, {
+          trigger: 'demo-curated',
+          soundEffects: true,
+          candidates: DEFAULT_MARKETS,
+          headline: document.title,
+          aiAnalysis: {
+            sentiment: {
+              label: 'BULLISH',
+              score: 0.62,
+              intensity: 0.85,
+              topWords: ['shatters', 'records', 'throughput', 'milestone', 'multistream']
+            },
+            nlpMatch: {
+              confidence: 0.95,
+              extractedTags: ['somnia', 'somi', 'tps', 'shannon', 'dreamdex']
+            }
+          }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+          const sel = window.getSelection().toString().trim();
+          if (sel.length > 2) {
+            const lower = sel.toLowerCase();
+            let target = somiMarket;
+            if (lower.includes('btc') || lower.includes('bitcoin')) {
+              target = DEFAULT_MARKETS.find(m => m.id === 'market-btc-100k');
+            } else if (lower.includes('eth') || lower.includes('ethereum')) {
+              target = DEFAULT_MARKETS.find(m => m.id === 'market-eth-strike');
+            }
+            if (target && target.id !== widget.market.id) {
+              widget.init(target, { trigger: 'demo-selection', candidates: DEFAULT_MARKETS });
+            } else if (widget.pulseHighlight) {
+              widget.pulseHighlight();
+            }
+          }
+        });
+      }
+    }, 800);
+  </script>
+</body>
+
+</html>

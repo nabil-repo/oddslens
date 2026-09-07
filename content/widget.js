@@ -38,6 +38,14 @@
     }
 
     connectedCallback() {
+      if (this.hasAttribute('inline')) {
+        this.style.position = 'relative';
+        this.style.top = 'auto';
+        this.style.right = 'auto';
+        this.style.bottom = 'auto';
+        this.style.left = 'auto';
+        return;
+      }
       // Default placement: top-right corner with 24px padding
       if (!this.style.top && !this.style.bottom) {
         this.style.top = '24px';
@@ -642,9 +650,9 @@
         });
       }
 
-      // Draggable header
+      // Draggable header (floating mode only)
       const header = root.querySelector('.oddslens-header');
-      if (header) {
+      if (header && !this.hasAttribute('inline')) {
         header.addEventListener('mousedown', (e) => {
           this.isDragging = true;
           const rect = this.getBoundingClientRect();

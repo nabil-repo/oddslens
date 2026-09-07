@@ -13,7 +13,36 @@ let blockPollInterval = null;
 let feedsInitialized = false;
 let localEventPollInterval = null;
 let localEventPollInFlight = false;
-const LOCAL_EVENT_API = 'http://localhost:3000/api/dreamdex';
+function getDemoBaseUrl() {
+  const base = settings?.demoServerUrl || DEFAULT_SETTINGS?.demoServerUrl || 'http://localhost:3000';
+  return base.replace(/\/$/, '');
+}
+
+function getEventApiUrl() {
+  return `${getDemoBaseUrl()}/api/dreamdex`;
+}
+
+function getDemoUrlForMarket(market) {
+  const base = getDemoBaseUrl();
+  const asset = (market?.asset || '').toUpperCase();
+  if (asset === 'ETH') {
+    return `${base}/demo/eth-article.html`;
+  }
+  if (asset === 'BOTNAV') {
+    return `${base}/demo/ai-agent-article.html`;
+  }
+  if (asset === 'SOMI') {
+    return `${base}/demo/somnia-article.html`;
+  }
+  if (asset === 'FED') {
+    return `${base}/demo/macro-article.html`;
+  }
+  if (asset === 'UCL') {
+    return `${base}/demo/sports-article.html`;
+  }
+  return `${base}/demo/crypto-article.html`;
+}
+
 // Cache: marketId+probBucket → { text, source, ts }
 const insightCache = new Map();
 
@@ -185,7 +214,7 @@ async function pollLocalEventFeed() {
   localEventPollInFlight = true;
 
   try {
-    const marketsResponse = await fetchWithTimeout(`${LOCAL_EVENT_API}/event-markets`, { cache: 'no-store' }, 8000);
+    const marketsResponse = await fetchWithTimeout(`${getEventApiUrl()}/event-markets`, { cache: 'no-store' }, 8000);
     if (!marketsResponse.ok) throw new Error(`event-markets returned ${marketsResponse.status}`);
     const liveMarkets = await marketsResponse.json();
     console.log(`[OddsLens] Local bridge returned ${liveMarkets.length} live binary markets.`);
@@ -212,7 +241,7 @@ async function pollLocalEventFeed() {
 
       try {
         const bookResponse = await fetchWithTimeout(
-          `${LOCAL_EVENT_API}/event-orderbooks?symbol=${encodeURIComponent(candidate.symbol)}`,
+          `${getEventApiUrl()}/event-orderbooks?symbol=${encodeURIComponent(candidate.symbol)}`,
           { cache: 'no-store' },
           4000
         );
@@ -413,14 +442,17 @@ function broadcastToTabs(message) {
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   await ensureInitialized();
   if (info.menuItemId === 'oddslens-check-odds' && info.selectionText && tab?.id) {
-    if (tab.url?.startsWith('chrome-extension://')) {
-      console.log('[OddsLens] Context menu is unavailable on extension-owned demo pages; use the page controls instead.');
-      return;
-    }
-
     const availableMarkets = (markets && markets.length > 0) ? markets : DEFAULT_MARKETS;
     const matchResult = matchText(info.selectionText, availableMarkets, settings.minMatchConfidence);
     const targetMarket = matchResult.bestMatch || availableMarkets[0];
+
+    if (tab.url?.startsWith('chrome-extension://')) {
+      console.log('[OddsLens] Context menu clicked on extension page; opening hosted demo page instead.');
+      const demoUrl = getDemoUrlForMarket(targetMarket);
+      chrome.tabs.create({ url: demoUrl });
+      return;
+    }
+
     const msg = {
       type: 'SHOW_ODDS_WIDGET',
       trigger: 'manual',

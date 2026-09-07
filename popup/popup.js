@@ -169,12 +169,48 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   });
 
+  function getDemoBaseUrl() {
+    const url = currentSettings?.demoServerUrl || DEFAULT_SETTINGS?.demoServerUrl || 'http://localhost:3000';
+    return url.replace(/\/$/, '');
+  }
+
+  function getDemoUrlForMarket(market) {
+    const base = getDemoBaseUrl();
+    const asset = (market?.asset || '').toUpperCase();
+    if (asset === 'ETH') {
+      return `${base}/demo/eth-article.html`;
+    }
+    if (asset === 'BOTNAV') {
+      return `${base}/demo/ai-agent-article.html`;
+    }
+    if (asset === 'SOMI') {
+      return `${base}/demo/somnia-article.html`;
+    }
+    if (asset === 'FED') {
+      return `${base}/demo/macro-article.html`;
+    }
+    if (asset === 'UCL') {
+      return `${base}/demo/sports-article.html`;
+    }
+    return `${base}/demo/crypto-article.html`;
+  }
+
   // 4. Helper to launch widget on active tab
   async function launchWidgetOnActiveTab(market, trigger) {
+    const demoUrl = getDemoUrlForMarket(market);
+
     if (isExtensionRuntime) {
       chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-        if (!tabs || !tabs[0] || !tabs[0].id) return;
-        const tabId = tabs[0].id;
+        const activeTab = tabs && tabs[0];
+        const tabUrl = activeTab?.url || '';
+
+        // If active tab cannot receive content scripts, open the hosted demo directly
+        if (!activeTab || !activeTab.id || tabUrl.startsWith('chrome://') || tabUrl.startsWith('chrome-extension://') || tabUrl.startsWith('about:') || tabUrl.startsWith('edge://')) {
+          chrome.tabs.create({ url: demoUrl });
+          return;
+        }
+
+        const tabId = activeTab.id;
         const msg = {
           type: 'SHOW_ODDS_WIDGET',
           trigger,
@@ -202,14 +238,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }, 100);
               }, 150);
             } catch (injectErr) {
-              console.warn('[OddsLens] Script injection fallback failed', injectErr);
+              console.warn('[OddsLens] Script injection fallback failed; opening hosted demo:', injectErr);
+              chrome.tabs.create({ url: demoUrl });
             }
+          } else {
+            chrome.tabs.create({ url: demoUrl });
           }
         }
       });
     } else {
-      // Standalone web preview: navigate to demo article
-      window.open('../demo/crypto-article.html', '_blank');
+      // Standalone web preview: navigate to hosted demo article
+      window.open(demoUrl, '_blank');
     }
   }
 
@@ -223,10 +262,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   btnOpenDemo.addEventListener('click', () => {
+    const demoUrl = `${getDemoBaseUrl()}/demo/index.html`;
     if (isExtensionRuntime) {
-      chrome.tabs.create({ url: chrome.runtime.getURL('demo/index.html') });
+      chrome.tabs.create({ url: demoUrl });
     } else {
-      window.location.href = '../demo/index.html';
+      window.open(demoUrl, '_blank');
     }
   });
 

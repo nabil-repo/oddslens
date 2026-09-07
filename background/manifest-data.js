@@ -71,6 +71,41 @@ export const DEFAULT_MARKETS = [
     targetTradeUrl: 'https://app.dreamdex.io/event-contracts/WBTC:USDso/15m'
   },
   {
+    id: 'market-eth-strike',
+    symbol: 'ETH-UP/USDso#YES',
+    counterSymbol: 'ETH-DOWN/USDso#NO',
+    title: 'Ethereum to close at or above opening price before window expiry',
+    category: 'Crypto / DeFi',
+    asset: 'ETH',
+    windowLabel: '15m Window',
+    probability: 0.54,
+    bestBid: 0.53,
+    bestAsk: 0.55,
+    volume24h: 36200,
+    openInterest: 142000,
+    liveData: true,
+    urlPatterns: [
+      '*://*bankless.com/*',
+      '*://*defipulse.com/*',
+      '*://*thedefiant.io/*',
+      '*://*coindesk.com/*eth*',
+      '*/demo/eth-article.html*'
+    ],
+    keywords: [
+      'ethereum',
+      'eth',
+      'vitalik',
+      'staking',
+      'defi',
+      'erc20',
+      'gas',
+      'smart contracts',
+      'gwei',
+      'weth'
+    ],
+    targetTradeUrl: 'https://app.dreamdex.io/event-contracts/WETH:USDso/15m'
+  },
+  {
     id: 'market-somi-tps',
     symbol: 'SOMI-TPS-100K/USDso#YES',
     counterSymbol: 'SOMI-TPS-100K/USDso#NO',
@@ -78,12 +113,19 @@ export const DEFAULT_MARKETS = [
     category: 'Ecosystem',
     asset: 'SOMI',
     windowLabel: 'Testnet Epoch',
+    probability: 0.72,
+    bestBid: 0.71,
+    bestAsk: 0.73,
+    volume24h: 62000,
+    openInterest: 210000,
+    liveData: true,
     urlPatterns: [
       '*://*somnia.network/*',
       '*://*dorahacks.io/*',
       '*://*twitter.com/*somnia*',
       '*://*x.com/*somnia*',
-      '*/demo/crypto-article.html*'
+      '*/demo/crypto-article.html*',
+      '*/demo/somnia-article.html*'
     ],
     keywords: [
       'somnia',
@@ -96,6 +138,40 @@ export const DEFAULT_MARKETS = [
       'event contracts',
       'high speed',
       'multistream'
+    ],
+    targetTradeUrl: 'https://app.dreamdex.io/event-contracts'
+  },
+  {
+    id: 'market-botnav',
+    symbol: 'BOTNAV-UP/USDso#YES',
+    counterSymbol: 'BOTNAV-DOWN/USDso#NO',
+    title: 'Will autonomous agent Kestrel close session with higher NAV?',
+    category: 'AI Agents',
+    asset: 'BOTNAV',
+    windowLabel: 'Agent Session',
+    probability: 0.61,
+    bestBid: 0.60,
+    bestAsk: 0.62,
+    volume24h: 18400,
+    openInterest: 85000,
+    liveData: true,
+    urlPatterns: [
+      '*://*venturebeat.com/*',
+      '*://*decrypt.co/*ai*',
+      '*://*theblock.co/*ai*',
+      '*/demo/ai-agent-article.html*'
+    ],
+    keywords: [
+      'botnav',
+      'agent',
+      'kestrel',
+      'autonomous agent',
+      'quant',
+      'ai trader',
+      'nav',
+      'algorithmic',
+      'ai model',
+      'session'
     ],
     targetTradeUrl: 'https://app.dreamdex.io/event-contracts'
   },
@@ -175,4 +251,5 @@ export const DEFAULT_SETTINGS = {
   aiProvider: 'auto', // 'auto' | 'openrouter' | 'gemini'
   openRouterModel: 'openrouter/free',
   aiEnabled: true, // Enable/disable AI analysis features
+  demoServerUrl: 'http://localhost:3000', // Hosted demo URL (e.g. http://localhost:3000 or Vercel URL)
 };

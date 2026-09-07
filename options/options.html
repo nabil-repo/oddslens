@@ -23,7 +23,7 @@
           <button class="btn btn-secondary" id="btn-export-json">⤓ Export JSON</button>
           <label class="btn btn-secondary" for="import-file">⤒ Import JSON</label>
           <input type="file" id="import-file" accept=".json" style="display: none;">
-          <a href="../demo/index.html" target="_blank" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
+          <a href="http://localhost:3000/demo/index.html" target="_blank" id="btn-open-demo-hub" class="btn btn-primary" style="display: inline-flex; align-items: center; gap: 6px;">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
             </svg>
@@ -49,6 +49,17 @@
                 <option value="testnet" selected>Somnia Shannon Testnet (Chain ID 50312)</option>
                 <option value="mainnet">Somnia Mainnet (Chain ID 5031)</option>
               </select>
+            </div>
+
+            <div class="form-row" style="margin-top: 10px;">
+              <label for="input-demo-url">Hosted Demo URL (Localhost / Vercel)</label>
+              <input
+                type="text"
+                id="input-demo-url"
+                class="form-input"
+                placeholder="http://localhost:3000 or https://your-project.vercel.app"
+                value="http://localhost:3000"
+              >
             </div>
 
             <div class="stats-row">

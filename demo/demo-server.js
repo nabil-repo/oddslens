@@ -176,7 +176,10 @@ server.listen(PORT, () => {
   console.log(`\n======================================================`);
   console.log(`[OddsLens] Demo Server is live at: http://localhost:${PORT}`);
   console.log(`[Demo Hub]     http://localhost:${PORT}/demo/index.html`);
-  console.log(`[Crypto News]  http://localhost:${PORT}/demo/crypto-article.html`);
+  console.log(`[BTC Markets]  http://localhost:${PORT}/demo/crypto-article.html`);
+  console.log(`[ETH DeFi]     http://localhost:${PORT}/demo/eth-article.html`);
+  console.log(`[Somnia TPS]   http://localhost:${PORT}/demo/somnia-article.html`);
+  console.log(`[AI Agents]    http://localhost:${PORT}/demo/ai-agent-article.html`);
   console.log(`[Sports News]  http://localhost:${PORT}/demo/sports-article.html`);
   console.log(`[Macro News]   http://localhost:${PORT}/demo/macro-article.html`);
   console.log(`======================================================\n`);

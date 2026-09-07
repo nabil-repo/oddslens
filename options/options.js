@@ -3,6 +3,8 @@ import { matchText } from '../background/matching-engine.js';
 
 document.addEventListener('DOMContentLoaded', async () => {
   const selectNetwork = document.getElementById('select-network');
+  const inputDemoUrl = document.getElementById('input-demo-url');
+  const btnOpenDemoHub = document.getElementById('btn-open-demo-hub');
   const optWsStatus = document.getElementById('opt-ws-status');
   const optRpcStatus = document.getElementById('opt-rpc-status');
   const netBadge = document.getElementById('net-badge');
@@ -55,7 +57,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         ...m,
         expiry: Math.floor(Date.now() / 1000) + (m.expiryOffsetSec || 14400)
       }));
-      settings = { ...DEFAULT_SETTINGS };
+      const savedDemoUrl = localStorage.getItem('oddslens_demo_server_url') || 'http://localhost:3000';
+      settings = { ...DEFAULT_SETTINGS, demoServerUrl: savedDemoUrl };
       applyState({
         markets,
         settings,
@@ -69,6 +72,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Sync network selector
     if (settings.network) {
       selectNetwork.value = settings.network;
+    }
+
+    const demoBase = (settings.demoServerUrl || 'http://localhost:3000').replace(/\/$/, '');
+    if (inputDemoUrl) {
+      inputDemoUrl.value = demoBase;
+    }
+    if (btnOpenDemoHub) {
+      btnOpenDemoHub.href = `${demoBase}/demo/index.html`;
     }
 
     if (res.networkInfo) {
@@ -428,6 +439,30 @@ document.addEventListener('DOMContentLoaded', async () => {
       localStorage.setItem('oddslens_ai_enabled', toggleAi.checked);
     }
     showToast(toggleAi.checked ? 'AI analysis enabled' : 'AI analysis disabled');
+  });
+
+  // Hosted demo URL change listener (debounced)
+  let saveDemoUrlTimer = null;
+  inputDemoUrl?.addEventListener('input', () => {
+    clearTimeout(saveDemoUrlTimer);
+    saveDemoUrlTimer = setTimeout(() => {
+      const url = (inputDemoUrl.value.trim() || 'http://localhost:3000').replace(/\/$/, '');
+      if (btnOpenDemoHub) {
+        btnOpenDemoHub.href = `${url}/demo/index.html`;
+      }
+      settings.demoServerUrl = url;
+      if (isExtensionRuntime) {
+        chrome.runtime.sendMessage({
+          type: 'UPDATE_SETTINGS',
+          payload: { demoServerUrl: url }
+        }, () => {
+          showToast(`Demo server URL set to ${url}`);
+        });
+      } else {
+        localStorage.setItem('oddslens_demo_server_url', url);
+        showToast(`Demo server URL set to ${url}`);
+      }
+    }, 600);
   });
 
   // Show/hide key

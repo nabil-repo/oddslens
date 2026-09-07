@@ -4,6 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Champions League Blockbuster: Real Madrid vs Manchester City Match Preview — Apex Sports</title>
+  <script>
+    // Ensure demo pages are viewed on hosted origin (localhost / Vercel) so Chrome MV3 content scripts run
+    if (window.location.protocol === 'chrome-extension:') {
+      try {
+        if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+          chrome.storage.local.get(['settings'], (data) => {
+            const baseUrl = (data?.settings?.demoServerUrl || 'http://localhost:3000').replace(/\/$/, '');
+            const demoPath = window.location.pathname.replace(/^.*\/demo\//, '/demo/');
+            window.location.replace(`${baseUrl}${demoPath}`);
+          });
+        } else {
+          const demoPath = window.location.pathname.replace(/^.*\/demo\//, '/demo/');
+          window.location.replace(`http://localhost:3000${demoPath}`);
+        }
+      } catch (e) {
+        window.location.replace('http://localhost:3000/demo/sports-article.html');
+      }
+    }
+  </script>
   <link rel="stylesheet" href="article.css">
 </head>
 <body>
@@ -12,6 +31,7 @@
     <div class="pub-nav-inner">
       <div class="pub-brand">APEX<span>SPORTS</span></div>
       <div class="pub-nav-links">
+        <a href="index.html" class="nav-back-hub" style="color: #00FF87; font-weight: 600;">← Demo Hub</a>
         <a href="#">Football</a>
         <a href="#">Champions League</a>
         <a href="#">Odds & Markets</a>

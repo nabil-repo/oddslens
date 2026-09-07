@@ -102,7 +102,7 @@
     if (!market) return;
 
     if (!activeWidget || !document.contains(activeWidget)) {
-      activeWidget = document.querySelector('odds-lens-overlay, [data-oddslens-widget="true"]');
+      activeWidget = document.querySelector('odds-lens-overlay:not([inline]), [data-oddslens-widget="true"]:not([inline])');
       if (!activeWidget) {
         activeWidget = (typeof window.createOddsLensWidget === 'function')
           ? window.createOddsLensWidget()

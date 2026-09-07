@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ethereum Derivatives Liquidity Surges on Somnia as DreamDEX Deploys On-Chain Event Contracts — DeFiPulse</title>
+  <script>
+    // Ensure demo pages are viewed on hosted origin (localhost / Vercel) so Chrome MV3 content scripts run
+    if (window.location.protocol === 'chrome-extension:') {
+      try {
+        if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+          chrome.storage.local.get(['settings'], (data) => {
+            const baseUrl = (data?.settings?.demoServerUrl || 'http://localhost:3000').replace(/\/$/, '');
+            const demoPath = window.location.pathname.replace(/^.*\/demo\//, '/demo/');
+            window.location.replace(`${baseUrl}${demoPath}`);
+          });
+        } else {
+          const demoPath = window.location.pathname.replace(/^.*\/demo\//, '/demo/');
+          window.location.replace(`http://localhost:3000${demoPath}`);
+        }
+      } catch (e) {
+        window.location.replace('http://localhost:3000/demo/eth-article.html');
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="article.css">
+</head>
+
+<body>
+  <!-- Header Bar -->
+  <nav class="pub-nav">
+    <div class="pub-nav-inner">
+      <div class="pub-brand">DEFI<span>PULSE</span></div>
+      <div class="pub-nav-links">
+        <a href="index.html" class="nav-back-hub" style="color: #00FF87; font-weight: 600;">← Demo Hub</a>
+        <a href="#">DeFi Protocols</a>
+        <a href="#">Yields</a>
+        <a href="#">Derivatives</a>
+        <a href="#">Layer 1s</a>
+      </div>
+      <div class="pub-status">● LIVE ETH MARKETS</div>
+    </div>
+  </nav>
+
+  <main class="article-container">
+    <!-- Breadcrumb & Tag -->
+    <div class="article-meta-top">
+      <span class="meta-tag">DEFI & DERIVATIVES</span>
+      <span class="meta-date">September 6, 2026 • 4 min read</span>
+    </div>
+
+    <h1 class="article-headline">
+      Ethereum Derivatives Liquidity Surges on Somnia as DreamDEX Deploys High-Speed Event Contracts
+    </h1>
+
+    <p class="article-lead">
+      Over 270 active binary outcome markets on Ethereum price strike windows have gone live on DreamDEX, 
+      leveraging Somnia’s sub-second finality to unlock frictionless decentralized hedging.
+    </p>
+
+    <!-- Author & Share -->
+    <div class="author-row">
+      <div class="author-avatar">EL</div>
+      <div class="author-info">
+        <span class="author-name">Elena Rostova</span>
+        <span class="author-role">Senior Derivatives Strategist</span>
+      </div>
+    </div>
+
+    <!-- Article Body -->
+    <article class="article-content">
+      <!-- Demo Callout Box -->
+      <div class="demo-callout">
+        <div class="callout-badge">OddsLens Live Demo Playground</div>
+        <p>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px; display: inline-block;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          <strong>How to test OddsLens on this Ethereum page:</strong><br>
+          • <strong>Auto-Detect:</strong> If the OddsLens extension is installed, the widget slides in automatically from the top-right corner with live Somnia testnet ETH contract odds.<br>
+          • <strong>Manual Mode:</strong> Highlight text below (such as <mark>Ethereum</mark> or <mark>ETH</mark>), right-click, and select <em>"Check DreamDEX odds for this"</em>.
+        </p>
+      </div>
+
+      <p>
+        Decentralized options and prediction markets have historically struggled with the prohibitive transaction costs
+        and block latency of legacy blockchains. Today, that paradigm is shifting rapidly as <mark class="match-hint">Ethereum</mark>
+        directional derivatives find a natural home on <mark class="match-hint">Somnia</mark>.
+      </p>
+
+      <p>
+        On <mark class="match-hint">DreamDEX</mark>, the primary Central Limit Order Book (CLOB) exchange on Somnia Shannon Testnet,
+        traders have accessed more than 270 active binary contracts pegged to <mark class="match-hint">ETH</mark> price benchmarks.
+        These event contracts allow participants to trade fixed-payout binary outcomes: predicting whether ETH will close at or above
+        its opening price within rolling 15-minute, 1-hour, and 24-hour windows.
+      </p>
+
+      <blockquote>
+        "Sub-second order placement without front-running or gas spikes turns event contracts into a real hedging instrument
+        for liquidity providers and crypto asset managers," said an ecosystem quant.
+      </blockquote>
+
+      <h2>Institutional Inflows and Staking Yield Momentum</h2>
+      <p>
+        Recent on-chain metrics show a steady increase in institutional ETH staking, driving demand for short-tenor
+        directional hedges. Rather than locking capital into illiquid synthetic futures, traders are taking advantage
+        of zero-spread minting on DreamDEX.
+      </p>
+
+      <p>
+        The protocol’s binary settlement engine guarantees programmatic execution directly against Pyth and on-chain
+        price feeds, ensuring full solvency backed by transparent collateral vaults.
+      </p>
+
+      <h2>Inline Market Discovery with OddsLens</h2>
+      <p>
+        As prediction markets expand across DeFi, browser-native lenses like OddsLens eliminate the friction of visiting
+        isolated decentralized applications. By surfacing live order book probabilities directly alongside breaking crypto news,
+        readers can assess market conviction and execute directional positions in a single workflow.
+      </p>
+    </article>
+  </main>
+
+  <!-- Standalone Demo Fallback -->
+  <script type="module">
+    import '../content/widget.js';
+    import { DEFAULT_MARKETS } from '../background/manifest-data.js';
+
+    setTimeout(() => {
+      if (!document.querySelector('odds-lens-overlay')) {
+        console.log('[Demo Standalone] Initializing standalone OddsLens widget for ETH preview');
+        const widget = document.createElement('odds-lens-overlay');
+        document.body.appendChild(widget);
+        const ethMarket = DEFAULT_MARKETS.find(m => m.id === 'market-eth-strike') || DEFAULT_MARKETS[1];
+        widget.init(ethMarket, {
+          trigger: 'demo-curated',
+          soundEffects: true,
+          candidates: DEFAULT_MARKETS,
+          headline: document.title,
+          aiAnalysis: {
+            sentiment: {
+              label: 'BULLISH',
+              score: 0.48,
+              intensity: 0.74,
+              topWords: ['surges', 'liquidity', 'hedging', 'momentum']
+            },
+            nlpMatch: {
+              confidence: 0.94,
+              extractedTags: ['ethereum', 'eth', 'defi', 'dreamdex']
+            }
+          }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+          const sel = window.getSelection().toString().trim();
+          if (sel.length > 2) {
+            const lower = sel.toLowerCase();
+            let target = ethMarket;
+            if (lower.includes('btc') || lower.includes('bitcoin')) {
+              target = DEFAULT_MARKETS.find(m => m.id === 'market-btc-100k');
+            } else if (lower.includes('somi') || lower.includes('somnia')) {
+              target = DEFAULT_MARKETS.find(m => m.id === 'market-somi-tps');
+            }
+            if (target && target.id !== widget.market.id) {
+              widget.init(target, { trigger: 'demo-selection', candidates: DEFAULT_MARKETS });
+            } else if (widget.pulseHighlight) {
+              widget.pulseHighlight();
+            }
+          }
+        });
+      }
+    }, 800);
+  </script>
+</body>
+
+</html>

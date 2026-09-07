@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Autonomous AI Trading Agents Take Over Somnia: Inside DreamDEX's Bot NAV Prediction Markets — TechDaily AI</title>
+  <script>
+    // Ensure demo pages are viewed on hosted origin (localhost / Vercel) so Chrome MV3 content scripts run
+    if (window.location.protocol === 'chrome-extension:') {
+      try {
+        if (typeof chrome !== 'undefined' && chrome.storage?.local) {
+          chrome.storage.local.get(['settings'], (data) => {
+            const baseUrl = (data?.settings?.demoServerUrl || 'http://localhost:3000').replace(/\/$/, '');
+            const demoPath = window.location.pathname.replace(/^.*\/demo\//, '/demo/');
+            window.location.replace(`${baseUrl}${demoPath}`);
+          });
+        } else {
+          const demoPath = window.location.pathname.replace(/^.*\/demo\//, '/demo/');
+          window.location.replace(`http://localhost:3000${demoPath}`);
+        }
+      } catch (e) {
+        window.location.replace('http://localhost:3000/demo/ai-agent-article.html');
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="article.css">
+</head>
+
+<body>
+  <!-- Header Bar -->
+  <nav class="pub-nav">
+    <div class="pub-nav-inner">
+      <div class="pub-brand">TECHDAILY<span>AI</span></div>
+      <div class="pub-nav-links">
+        <a href="index.html" class="nav-back-hub" style="color: #00FF87; font-weight: 600;">← Demo Hub</a>
+        <a href="#">Agentic Web3</a>
+        <a href="#">Autonomous Quants</a>
+        <a href="#">AI Models</a>
+        <a href="#">On-Chain Metrics</a>
+      </div>
+      <div class="pub-status">● AGENT BENCHMARK ACTIVE</div>
+    </div>
+  </nav>
+
+  <main class="article-container">
+    <!-- Breadcrumb & Tag -->
+    <div class="article-meta-top">
+      <span class="meta-tag">AGENTIC DEFI & AI QUANTS</span>
+      <span class="meta-date">September 6, 2026 • 5 min read</span>
+    </div>
+
+    <h1 class="article-headline">
+      Autonomous AI Trading Agents Dominate On-Chain Order Books: Inside DreamDEX's Bot NAV Markets
+    </h1>
+
+    <p class="article-lead">
+      On Somnia's high-speed blockchain, autonomous algorithmic agents are no longer just market makers — their performance 
+      has become the underlying asset for a novel wave of prediction contracts.
+    </p>
+
+    <!-- Author & Share -->
+    <div class="author-row">
+      <div class="author-avatar">AX</div>
+      <div class="author-info">
+        <span class="author-name">Alex Vance</span>
+        <span class="author-role">Autonomous Systems Editor</span>
+      </div>
+    </div>
+
+    <!-- Article Body -->
+    <article class="article-content">
+      <!-- Demo Callout Box -->
+      <div class="demo-callout">
+        <div class="callout-badge">OddsLens Live Demo Playground</div>
+        <p>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px; display: inline-block;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          <strong>How to test OddsLens on this AI Agent page:</strong><br>
+          • <strong>Auto-Detect:</strong> If the OddsLens extension is installed, the widget slides in automatically with live Somnia testnet BOTNAV contracts.<br>
+          • <strong>Manual Mode:</strong> Highlight text below (such as <mark>Kestrel</mark> or <mark>BOTNAV</mark>), right-click, and select <em>"Check DreamDEX odds for this"</em>.
+        </p>
+      </div>
+
+      <p>
+        The convergence of machine learning and decentralized finance has reached a major milestone on <mark class="match-hint">Somnia</mark>.
+        Powered by high-throughput sub-second blocks, a new class of autonomous AI agents is actively executing quant strategies on
+        <mark class="match-hint">DreamDEX</mark>.
+      </p>
+
+      <p>
+        Unlike traditional off-chain trading bots, these autonomous models operate fully on-chain. Among the most popular
+        is <mark class="match-hint">Kestrel</mark>, a reinforcement learning agent trained to navigate order book microstructure
+        and capture dynamic spreads during high-volatility epochs.
+      </p>
+
+      <h2>Trading on the Trader: The Rise of Bot NAV Contracts</h2>
+      <p>
+        In an innovative twist on prediction markets, DreamDEX has launched <mark class="match-hint">BOTNAV</mark> event contracts.
+        These binary contracts allow traders to speculate directly on whether an autonomous agent will close its session with
+        a higher Net Asset Value (NAV).
+      </p>
+
+      <blockquote>
+        "Instead of just letting bots trade against humans, we turned the bot’s own performance into an open event market.
+        If Kestrel finds alpha, YES pays out; if market conditions deteriorate, NO wins," explains a Somnia hackathon lead.
+      </blockquote>
+
+      <h2>Why Somnia Is Built for Agentic Finance</h2>
+      <p>
+        High-frequency algorithmic trading requires deterministic execution and near-zero latency. On legacy layer 1 networks,
+        gas fee spikes and block re-orgs make autonomous execution economically unviable. Somnia’s multi-stream consensus
+        enables AI agents to submit hundreds of orders per second without congestion.
+      </p>
+
+      <h2>Contextual Insights via OddsLens</h2>
+      <p>
+        With OddsLens, users analyzing agent benchmarks and performance articles receive live on-chain odds inline.
+        The integrated Gemini AI synthesizer scans the article context, compares historical bot win rates against the current
+        order book pricing, and provides a clear signal on market consensus.
+      </p>
+    </article>
+  </main>
+
+  <!-- Standalone Demo Fallback -->
+  <script type="module">
+    import '../content/widget.js';
+    import { DEFAULT_MARKETS } from '../background/manifest-data.js';
+
+    setTimeout(() => {
+      if (!document.querySelector('odds-lens-overlay')) {
+        console.log('[Demo Standalone] Initializing standalone OddsLens widget for BOTNAV preview');
+        const widget = document.createElement('odds-lens-overlay');
+        document.body.appendChild(widget);
+        const botMarket = DEFAULT_MARKETS.find(m => m.id === 'market-botnav') || DEFAULT_MARKETS[0];
+        widget.init(botMarket, {
+          trigger: 'demo-curated',
+          soundEffects: true,
+          candidates: DEFAULT_MARKETS,
+          headline: document.title,
+          aiAnalysis: {
+            sentiment: {
+              label: 'BULLISH',
+              score: 0.55,
+              intensity: 0.81,
+              topWords: ['autonomous', 'alpha', 'kestrel', 'throughput', 'reinforcement']
+            },
+            nlpMatch: {
+              confidence: 0.96,
+              extractedTags: ['botnav', 'kestrel', 'agent', 'dreamdex', 'somnia']
+            }
+          }
+        });
+
+        document.addEventListener('mouseup', (e) => {
+          const sel = window.getSelection().toString().trim();
+          if (sel.length > 2) {
+            const lower = sel.toLowerCase();
+            let target = botMarket;
+            if (lower.includes('btc') || lower.includes('bitcoin')) {
+              target = DEFAULT_MARKETS.find(m => m.id === 'market-btc-100k');
+            } else if (lower.includes('eth') || lower.includes('ethereum')) {
+              target = DEFAULT_MARKETS.find(m => m.id === 'market-eth-strike');
+            }
+            if (target && target.id !== widget.market.id) {
+              widget.init(target, { trigger: 'demo-selection', candidates: DEFAULT_MARKETS });
+            } else if (widget.pulseHighlight) {
+              widget.pulseHighlight();
+            }
+          }
+        });
+      }
+    }, 800);
+  </script>
+</body>
+
+</html>

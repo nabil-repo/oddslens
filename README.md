@@ -168,11 +168,19 @@ cd oddslens
 4. Select the `oddslens` root folder.
 5. OddsLens is now installed! Pin it to your toolbar.
 
-### Step 3: Run the Local Demo Hub
+### Step 3: Run or Host the Demo Hub
+#### Option A: Local Demo Server (Default)
 ```bash
 npm start
 ```
-Open **`http://localhost:3000/demo/index.html`** in your browser to explore the full interactive demo suite and judging hub.
+Open **`http://localhost:3000/demo/index.html`** in your browser to explore the interactive demo suite and judging hub.
+
+#### Option B: Hosted Deployment (Vercel / Cloud)
+The repository includes `vercel.json` and serverless API endpoints in `/api`. Deploy to Vercel with:
+```bash
+npx vercel
+```
+Then, in the **OddsLens Options** dashboard (`chrome-extension://.../options/options.html`), set the **Hosted Demo URL** to your deployment domain (e.g. `https://oddslens.vercel.app`). All demo links and widget tests will automatically open against your hosted domain.
 
 ---
 
