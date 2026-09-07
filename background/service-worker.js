@@ -181,12 +181,22 @@ async function pollLocalEventFeed() {
     const marketsResponse = await fetch(`${LOCAL_EVENT_API}/event-markets`, { cache: 'no-store' });
     if (!marketsResponse.ok) throw new Error(`event-markets returned ${marketsResponse.status}`);
     const liveMarkets = await marketsResponse.json();
+    console.log(`[OddsLens] Local bridge returned ${liveMarkets.length} live binary markets.`);
 
     for (const curatedMarket of markets) {
       const candidate = liveMarkets
         .filter(market => market.asset === curatedMarket.asset)
         .sort((a, b) => (b.expiry || 0) - (a.expiry || 0))[0];
-      if (!candidate) continue;
+      if (!candidate) {
+        curatedMarket.feedStatus = 'NO_MARKET';
+        console.log(`[OddsLens] No live binary market is currently available for ${curatedMarket.asset}.`);
+        broadcastToTabs({
+          type: 'EVENT_FEED_STATUS',
+          marketId: curatedMarket.id,
+          status: 'NO_MARKET'
+        });
+        continue;
+      }
 
       const bookResponse = await fetch(
         `${LOCAL_EVENT_API}/event-orderbooks?symbol=${encodeURIComponent(candidate.symbol)}`,
@@ -202,11 +212,19 @@ async function pollLocalEventFeed() {
       curatedMarket.title = candidate.title || curatedMarket.title;
       curatedMarket.expiry = candidate.expiry || null;
       curatedMarket.liveData = hasQuote;
+      curatedMarket.feedStatus = hasQuote ? 'LIVE' : 'NO_LIQUIDITY';
       curatedMarket.bestBid = hasQuote ? bestBid : null;
       curatedMarket.bestAsk = hasQuote ? bestAsk : null;
       curatedMarket.probability = hasQuote
         ? Math.round(((bestBid + bestAsk) / 2) * 1000) / 1000
         : null;
+
+      console.log(`[OddsLens] ${curatedMarket.asset} bridge market ${candidate.symbol}: ${hasQuote ? `bid ${bestBid}, ask ${bestAsk}` : 'no resting liquidity'}`);
+      broadcastToTabs({
+        type: 'EVENT_FEED_STATUS',
+        marketId: curatedMarket.id,
+        status: curatedMarket.feedStatus
+      });
 
       if (hasQuote) {
         broadcastToTabs({
@@ -362,6 +380,11 @@ function broadcastToTabs(message) {
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   await ensureInitialized();
   if (info.menuItemId === 'oddslens-check-odds' && info.selectionText && tab?.id) {
+    if (tab.url?.startsWith('chrome-extension://')) {
+      console.log('[OddsLens] Context menu is unavailable on extension-owned demo pages; use the page controls instead.');
+      return;
+    }
+
     const availableMarkets = (markets && markets.length > 0) ? markets : DEFAULT_MARKETS;
     const matchResult = matchText(info.selectionText, availableMarkets, settings.minMatchConfidence);
     const targetMarket = matchResult.bestMatch || availableMarkets[0];
@@ -436,7 +459,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
             matched: true,
             market: match.market,
             matchType: match.matchType,
-            confidence: match.confidence
+            confidence: match.confidence,
+            feedStatus: match.market.feedStatus || null
           });
         } else {
           sendResponse({ matched: false });

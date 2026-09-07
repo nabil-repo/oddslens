@@ -123,6 +123,11 @@
     if (activeWidget.init) {
       activeWidget.init(market, { ...meta, headline });
     }
+    if (market.feedStatus && typeof activeWidget.setFeedStatus === 'function') {
+      activeWidget.setFeedStatus(market.feedStatus);
+    } else if (meta.feedStatus && typeof activeWidget.setFeedStatus === 'function') {
+      activeWidget.setFeedStatus(meta.feedStatus);
+    }
     activeWidget.style.display = 'block';
     activeWidget.style.opacity = '1';
     activeWidget.style.transform = 'scale(1)';
@@ -174,6 +179,7 @@
               trigger: 'auto-detect',
               confidence: response.confidence,
               matchType: response.matchType,
+              feedStatus: response.feedStatus,
               defaultBetAmount: 10
             });
           }, 300);
@@ -212,6 +218,14 @@
       case 'DEX_STATUS_CHANGE': {
         const widget = activeWidget || document.querySelector('odds-lens-overlay');
         if (widget && document.body.contains(widget) && typeof widget.setFeedStatus === 'function') {
+          widget.setFeedStatus(message.status);
+        }
+        break;
+      }
+
+      case 'EVENT_FEED_STATUS': {
+        const widget = activeWidget || document.querySelector('odds-lens-overlay');
+        if (widget && document.body.contains(widget) && widget.market?.id === message.marketId && typeof widget.setFeedStatus === 'function') {
           widget.setFeedStatus(message.status);
         }
         break;

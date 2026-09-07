@@ -121,6 +121,10 @@
       if (!statusEl) return;
       statusEl.textContent = status === 'UNSUPPORTED'
         ? 'Live event-contract feed unavailable.'
+        : status === 'NO_MARKET'
+          ? 'No live market is available for this topic.'
+        : status === 'NO_LIQUIDITY'
+          ? 'Live market found, but no orders are currently available.'
         : status === 'ERROR'
           ? 'Live DreamDEX feed unavailable.'
           : 'Waiting for live DreamDEX data...';
