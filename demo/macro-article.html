@@ -124,8 +124,12 @@
     import { DEFAULT_MARKETS } from '../background/manifest-data.js';
 
     setTimeout(() => {
-      if (!document.querySelector('odds-lens-overlay')) {
-        const widget = document.createElement('odds-lens-overlay');
+      if (document.documentElement.hasAttribute('data-oddslens-extension-active') ||
+          document.querySelector('odds-lens-overlay:not([inline]), [data-oddslens-widget="true"]:not([inline])')) {
+        return;
+      }
+      console.log('[Demo Standalone] Initializing standalone OddsLens widget for Macro preview');
+      const widget = document.createElement('odds-lens-overlay');
         document.body.appendChild(widget);
         const fedMarket = DEFAULT_MARKETS.find(m => m.id === 'market-fed-rates') || DEFAULT_MARKETS[3];
         widget.init(fedMarket, {
@@ -163,8 +167,6 @@
             }
           }
         });
-
-      }
     }, 800);
   </script>
 </body>

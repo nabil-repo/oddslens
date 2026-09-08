@@ -8,6 +8,11 @@
 
   console.log('[OddsLens] Content script initialized on', window.location.href);
 
+  // Mark document so demo fallback scripts know the extension is actively running
+  try {
+    document.documentElement.setAttribute('data-oddslens-extension-active', 'true');
+  } catch (e) { }
+
   // Safe Custom Elements registration check
   const hasCustomElements = typeof window !== 'undefined' &&
     typeof window.customElements !== 'undefined' &&
@@ -101,13 +106,18 @@
   function displayWidget(market, meta = {}) {
     if (!market) return;
 
-    if (!activeWidget || !document.contains(activeWidget)) {
-      activeWidget = document.querySelector('odds-lens-overlay:not([inline]), [data-oddslens-widget="true"]:not([inline])');
-      if (!activeWidget) {
-        activeWidget = (typeof window.createOddsLensWidget === 'function')
-          ? window.createOddsLensWidget()
-          : document.createElement('odds-lens-overlay');
+    // Ensure any duplicate overlay or standalone demo fallback widget is removed
+    const existingOverlays = document.querySelectorAll('odds-lens-overlay:not([inline]), [data-oddslens-widget="true"]:not([inline])');
+    existingOverlays.forEach(el => {
+      if (el !== activeWidget) {
+        el.remove();
       }
+    });
+
+    if (!activeWidget || !document.contains(activeWidget)) {
+      activeWidget = (typeof window.createOddsLensWidget === 'function')
+        ? window.createOddsLensWidget()
+        : document.createElement('odds-lens-overlay');
       const target = document.body || document.documentElement;
       if (!document.contains(activeWidget) && target) {
         target.appendChild(activeWidget);
@@ -156,8 +166,12 @@
           return;
         }
       }
-      activeWidget.meta = { ...activeWidget.meta, aiAnalysis: analysis };
-    }).catch(() => {});
+      if (typeof activeWidget.setAiAnalysis === 'function') {
+        activeWidget.setAiAnalysis(analysis);
+      } else {
+        activeWidget.meta = { ...activeWidget.meta, aiAnalysis: analysis };
+      }
+    }).catch(() => { });
   }
 
   // ─── Auto-Detect on Page Load ─────────────────────────────────────────────

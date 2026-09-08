@@ -22,7 +22,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let currentSettings = {};
   let matchedTestMarket = null;
 
-  const isExtensionRuntime = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage;
+  const isExtensionRuntime = typeof chrome !== 'undefined' &&
+    Boolean(chrome.runtime?.id) &&
+    typeof chrome.runtime.sendMessage === 'function';
 
   // 1. Fetch current background worker state
   async function loadState() {

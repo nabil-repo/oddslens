@@ -29,7 +29,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   let markets = [];
   let settings = {};
 
-  const isExtensionRuntime = typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.sendMessage;
+  const isExtensionRuntime = typeof chrome !== 'undefined' &&
+    Boolean(chrome.runtime?.id) &&
+    typeof chrome.runtime.sendMessage === 'function';
 
   function showToast(msg) {
     toast.textContent = msg;
@@ -473,8 +475,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Test AI Insight button
   btnTestAiInsight?.addEventListener('click', async () => {
     const key = geminiKeyInput.value.trim();
-    const testMarket = markets[0];
-    if (!testMarket) { showToast('No markets loaded'); return; }
+    const testMarket = markets[0] || {
+      id: 'market-btc-100k',
+      title: 'Bitcoin to surpass $100,000 before window expiry',
+      probability: 0.5,
+      asset: 'BTC'
+    };
+
+    // Save key immediately (don't wait for debounce)
+    clearTimeout(saveKeyTimer);
+    if (isExtensionRuntime) {
+      chrome.runtime.sendMessage({
+        type: 'UPDATE_SETTINGS',
+        payload: { geminiApiKey: key }
+      });
+    } else {
+      localStorage.setItem('oddslens_gemini_key', key);
+    }
+    const status = getProviderStatus(key);
+    aiGeminiStatus.textContent = status.text;
+    aiGeminiStatus.className = status.className;
 
     btnTestAiInsight.textContent = 'Testing...';
     btnTestAiInsight.disabled = true;
@@ -485,7 +505,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         payload: {
           market: testMarket,
           sentiment: { label: 'BULLISH', score: 0.45, intensity: 0.6, topWords: ['surge', 'record', 'momentum'] },
-          headline: 'Bitcoin surges to new highs amid strong institutional demand'
+          headline: 'Bitcoin surges to new highs amid strong institutional demand',
+          apiKey: key,
+          bypassCache: true
         }
       }, (response) => {
         btnTestAiInsight.textContent = 'Test Insight';
@@ -499,6 +521,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           aiTestSource.textContent = isOR ? 'OpenRouter AI' : (isGem ? 'Gemini AI' : 'AI Template');
           aiTestSource.style.color = (isOR || isGem) ? '#00F0FF' : '#00FF87';
           aiTestText.textContent = response.insight.text;
+        } else {
+          showToast('Failed to generate insight');
         }
       });
     } else {

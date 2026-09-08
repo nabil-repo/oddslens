@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -25,6 +26,7 @@
   </script>
   <link rel="stylesheet" href="article.css">
 </head>
+
 <body>
   <!-- Header Bar -->
   <nav class="pub-nav">
@@ -52,7 +54,8 @@
     </h1>
 
     <p class="article-lead">
-      The two most dominant forces in modern European football prepare to renew their iconic rivalry at the Santiago Bernabéu, with event market odds shifting dramatically.
+      The two most dominant forces in modern European football prepare to renew their iconic rivalry at the Santiago
+      Bernabéu, with event market odds shifting dramatically.
     </p>
 
     <div class="author-row">
@@ -67,32 +70,50 @@
       <div class="demo-callout">
         <div class="callout-badge">OddsLens Live Demo Playground</div>
         <p>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px; display: inline-block;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            style="vertical-align: -2px; margin-right: 4px; display: inline-block;">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
           <strong>How to test OddsLens on this page:</strong><br>
-          • <strong>Auto-Detect:</strong> If the OddsLens extension is installed, the widget will automatically detect this sports URL and render the Real Madrid vs Manchester City event contract.<br>
-          • <strong>Manual Mode:</strong> Highlight text below (such as <mark>Real Madrid</mark> or <mark>Champions League</mark>), right-click, and choose <em>"Check DreamDEX odds for this"</em>.
+          • <strong>Auto-Detect:</strong> If the OddsLens extension is installed, the widget will automatically detect
+          this sports URL and render the Real Madrid vs Manchester City event contract.<br>
+          • <strong>Manual Mode:</strong> Highlight text below (such as <mark>Real Madrid</mark> or <mark>Champions
+            League</mark>), right-click, and choose <em>"Check DreamDEX odds for this"</em>.
         </p>
       </div>
 
       <p>
-        The stage is set for another breathtaking chapter in continental football as <mark class="match-hint">Real Madrid</mark> welcomes Pep Guardiola’s <mark class="match-hint">Manchester City</mark> to the Spanish capital. With both teams in commanding domestic form, analysts across global betting and on-chain prediction venues are split on who will seize the first-leg advantage.
+        The stage is set for another breathtaking chapter in continental football as <mark class="match-hint">Real
+          Madrid</mark> welcomes Pep Guardiola’s <mark class="match-hint">Manchester City</mark> to the Spanish capital.
+        With both teams in commanding domestic form, analysts across global betting and on-chain prediction venues are
+        split on who will seize the first-leg advantage.
       </p>
 
       <p>
-        Carlo Ancelotti’s side has enjoyed a sensational campaign, spurred on by the lethal partnership between <mark class="match-hint">Vinicius</mark> Junior and Jude <mark class="match-hint">Bellingham</mark>. Madrid’s ability to conjure moments of individual brilliance in high-leverage knockout ties has historically made them resilient against any tactical challenge.
+        Carlo Ancelotti’s side has enjoyed a sensational campaign, spurred on by the lethal partnership between <mark
+          class="match-hint">Vinicius</mark> Junior and Jude <mark class="match-hint">Bellingham</mark>. Madrid’s
+        ability to conjure moments of individual brilliance in high-leverage knockout ties has historically made them
+        resilient against any tactical challenge.
       </p>
 
       <blockquote>
-        "At the Bernabéu on a Champions League night, probabilities mean very little once the whistle blows. But on-chain markets are trading this closer than ever before," said Madrid midfielder Luka Modrić.
+        "At the Bernabéu on a Champions League night, probabilities mean very little once the whistle blows. But
+        on-chain markets are trading this closer than ever before," said Madrid midfielder Luka Modrić.
       </blockquote>
 
       <h2>Erling Haaland and City’s Relentless Machine</h2>
       <p>
-        On the opposing side, Erling <mark class="match-hint">Haaland</mark> will look to pierce Madrid’s backline. The Norwegian powerhouse has already racked up 11 goals in European competition this season, supported by Kevin De Bruyne’s incisive distribution.
+        On the opposing side, Erling <mark class="match-hint">Haaland</mark> will look to pierce Madrid’s backline. The
+        Norwegian powerhouse has already racked up 11 goals in European competition this season, supported by Kevin De
+        Bruyne’s incisive distribution.
       </p>
 
       <p>
-        On <mark class="match-hint">DreamDEX</mark>, where binary event contracts for the <mark class="match-hint">UCL</mark> final have crossed over $89,000 in volume on the Somnia blockchain, the odds currently lean slightly toward Madrid holding home advantage at 54% to 46%.
+        On <mark class="match-hint">DreamDEX</mark>, where binary event contracts for the <mark
+          class="match-hint">UCL</mark> final have crossed over $89,000 in volume on the Somnia blockchain, the odds
+        currently lean slightly toward Madrid holding home advantage at 54% to 46%.
       </p>
     </article>
   </main>
@@ -103,48 +124,51 @@
     import { DEFAULT_MARKETS } from '../background/manifest-data.js';
 
     setTimeout(() => {
-      if (!document.querySelector('odds-lens-overlay')) {
-        const widget = document.createElement('odds-lens-overlay');
-        document.body.appendChild(widget);
-        const uclMarket = DEFAULT_MARKETS.find(m => m.id === 'market-ucl-final') || DEFAULT_MARKETS[2];
-        widget.init(uclMarket, {
-          trigger: 'demo-curated',
-          soundEffects: true,
-          candidates: DEFAULT_MARKETS,
-          headline: document.title,
-          aiAnalysis: {
-            sentiment: {
-              label: 'NEUTRAL',
-              score: 0.08,
-              intensity: 0.54,
-              topWords: ['clash', 'rivalry', 'split', 'advantage']
-            },
-            nlpMatch: {
-              confidence: 0.88,
-              extractedTags: ['real madrid', 'manchester city', 'ucl']
-            }
-          }
-        });
-
-        document.addEventListener('mouseup', () => {
-          const sel = window.getSelection().toString().trim().toLowerCase();
-          if (sel.length > 2) {
-            let target = uclMarket;
-            if (sel.includes('btc') || sel.includes('bitcoin')) {
-              target = DEFAULT_MARKETS.find(m => m.id === 'market-btc-100k');
-            } else if (sel.includes('somnia')) {
-              target = DEFAULT_MARKETS.find(m => m.id === 'market-somi-tps');
-            }
-            if (target && target.id !== widget.market.id) {
-              widget.init(target, { trigger: 'demo-selection', candidates: DEFAULT_MARKETS });
-            } else if (widget.pulseHighlight) {
-              widget.pulseHighlight();
-            }
-          }
-        });
-
+      if (document.documentElement.hasAttribute('data-oddslens-extension-active') ||
+        document.querySelector('odds-lens-overlay:not([inline]), [data-oddslens-widget="true"]:not([inline])')) {
+        return;
       }
+      console.log('[Demo Standalone] Initializing standalone OddsLens widget for UCL preview');
+      const widget = document.createElement('odds-lens-overlay');
+      document.body.appendChild(widget);
+      const uclMarket = DEFAULT_MARKETS.find(m => m.id === 'market-ucl-final') || DEFAULT_MARKETS[2];
+      widget.init(uclMarket, {
+        trigger: 'demo-curated',
+        soundEffects: true,
+        candidates: DEFAULT_MARKETS,
+        headline: document.title,
+        aiAnalysis: {
+          sentiment: {
+            label: 'NEUTRAL',
+            score: 0.08,
+            intensity: 0.54,
+            topWords: ['clash', 'rivalry', 'split', 'advantage']
+          },
+          nlpMatch: {
+            confidence: 0.88,
+            extractedTags: ['real madrid', 'manchester city', 'ucl']
+          }
+        }
+      });
+
+      document.addEventListener('mouseup', () => {
+        const sel = window.getSelection().toString().trim().toLowerCase();
+        if (sel.length > 2) {
+          let target = uclMarket;
+          if (sel.includes('btc') || sel.includes('bitcoin')) {
+            target = DEFAULT_MARKETS.find(m => m.id === 'market-btc-100k');
+          } else if (sel.includes('somnia')) {
+            target = DEFAULT_MARKETS.find(m => m.id === 'market-somi-tps');
+          }
+          if (target && target.id !== widget.market.id) {
+            widget.init(target, { trigger: 'demo-selection', candidates: DEFAULT_MARKETS });
+          } else if (widget.pulseHighlight) {
+            widget.pulseHighlight();
+          }
+        }
+      });
     }, 800);
   </script>
 </body>
+
 </html>

@@ -127,9 +127,12 @@
     import { DEFAULT_MARKETS } from '../background/manifest-data.js';
 
     setTimeout(() => {
-      if (!document.querySelector('odds-lens-overlay')) {
-        console.log('[Demo Standalone] Initializing standalone OddsLens widget for BOTNAV preview');
-        const widget = document.createElement('odds-lens-overlay');
+      if (document.documentElement.hasAttribute('data-oddslens-extension-active') ||
+          document.querySelector('odds-lens-overlay:not([inline]), [data-oddslens-widget="true"]:not([inline])')) {
+        return;
+      }
+      console.log('[Demo Standalone] Initializing standalone OddsLens widget for BOTNAV preview');
+      const widget = document.createElement('odds-lens-overlay');
         document.body.appendChild(widget);
         const botMarket = DEFAULT_MARKETS.find(m => m.id === 'market-botnav') || DEFAULT_MARKETS[0];
         widget.init(botMarket, {
@@ -168,7 +171,6 @@
             }
           }
         });
-      }
     }, 800);
   </script>
 </body>

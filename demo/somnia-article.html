@@ -122,9 +122,12 @@
     import { DEFAULT_MARKETS } from '../background/manifest-data.js';
 
     setTimeout(() => {
-      if (!document.querySelector('odds-lens-overlay')) {
-        console.log('[Demo Standalone] Initializing standalone OddsLens widget for Somnia TPS preview');
-        const widget = document.createElement('odds-lens-overlay');
+      if (document.documentElement.hasAttribute('data-oddslens-extension-active') ||
+          document.querySelector('odds-lens-overlay:not([inline]), [data-oddslens-widget="true"]:not([inline])')) {
+        return;
+      }
+      console.log('[Demo Standalone] Initializing standalone OddsLens widget for Somnia TPS preview');
+      const widget = document.createElement('odds-lens-overlay');
         document.body.appendChild(widget);
         const somiMarket = DEFAULT_MARKETS.find(m => m.id === 'market-somi-tps') || DEFAULT_MARKETS[1];
         widget.init(somiMarket, {
@@ -163,7 +166,6 @@
             }
           }
         });
-      }
     }, 800);
   </script>
 </body>

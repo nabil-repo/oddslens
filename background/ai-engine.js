@@ -273,7 +273,7 @@ export function generateInsightTemplate(market, sentiment) {
 
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions';
-const INSIGHT_TIMEOUT_MS = 5000;
+const INSIGHT_TIMEOUT_MS = 8000;
 
 /**
  * Detect whether an API key belongs to OpenRouter or Google Gemini.
@@ -290,6 +290,49 @@ export function detectAiProvider(apiKey, explicitProvider = 'auto') {
     return 'openrouter';
   }
   return 'gemini';
+}
+
+/**
+ * Clean LLM response text from reasoning tokens, thinking traces, preambles, and markdown quotes.
+ * @param {string} rawText
+ * @returns {string}
+ */
+export function cleanAiInsightText(rawText) {
+  if (!rawText) return '';
+  let text = String(rawText).trim();
+
+  // 1. Remove <think>...</think> blocks
+  text = text.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
+  // 2. If it starts with "Here's a thinking process:" or similar chain-of-thought preamble:
+  if (/^(?:here['’]?s a thinking process|thinking process|analysis:|\d+\.\s*\*\*analyze)/i.test(text)) {
+    // Check if separated by double newline into thinking + final answer
+    const sections = text.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+    const nonThinking = sections.filter(s => !/^(?:here['’]?s a thinking process|thinking process|\d+\.|\*|-)/i.test(s));
+    if (nonThinking.length > 0) {
+      text = nonThinking[nonThinking.length - 1];
+    } else {
+      // Check for quoted strings - pick the last one
+      const matches = Array.from(text.matchAll(/"([^"]{20,250})"/g));
+      if (matches.length > 0) {
+        text = matches[matches.length - 1][1];
+      } else {
+        const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+        const candidateLines = lines.filter(l => !/^(?:here['’]?s a thinking process|thinking process|\d+\.|\*|-)/i.test(l));
+        if (candidateLines.length > 0) {
+          text = candidateLines[candidateLines.length - 1];
+        }
+      }
+    }
+  }
+
+  // 3. Strip any residual preambles like "Insight:", "Recommendation:", etc.
+  text = text.replace(/^(?:insight|summary|analysis|recommendation|takeaway):\s*/i, '');
+
+  // 4. Strip surrounding quotation marks or markdown asterisks/backticks
+  text = text.replace(/^["'`*]+|["'`*]+$/g, '').trim();
+
+  return text;
 }
 
 /**
@@ -327,16 +370,15 @@ export async function callOpenRouterInsight(market, sentiment, headline, apiKey,
         model: model || 'openrouter/free',
         messages: [
           {
-            role: 'system',
-            content: 'You are a concise prediction market analyst. Write exactly ONE sentence of insight for a retail trader.'
-          },
-          {
             role: 'user',
-            content: prompt
+            content: `You are a concise prediction market analyst. Respond with ONLY one short, punchy sentence (max 25 words) for a retail trader. Do NOT include any reasoning, thinking process, preamble, or notes.\n\n${prompt}`
           }
         ],
-        max_tokens: 60,
-        temperature: 0.7
+        reasoning: {
+          exclude: true
+        },
+        max_tokens: 140,
+        temperature: 0.4
       })
     });
 
@@ -349,9 +391,11 @@ export async function callOpenRouterInsight(market, sentiment, headline, apiKey,
     }
 
     const data = await response.json();
-    const text = data?.choices?.[0]?.message?.content?.trim();
+    let text = data?.choices?.[0]?.message?.content || '';
+    text = cleanAiInsightText(text);
 
-    if (!text || text.length < 10) {
+    if (!text || text.length < 15 || /^(?:here['’]?s a thinking process|\d+\.)/i.test(text)) {
+      console.warn('[OddsLens AI] Filtered out reasoning or truncated response from model');
       return null;
     }
 
@@ -430,7 +474,8 @@ export async function callGeminiInsight(market, sentiment, headline, apiKey) {
     }
 
     const data = await response.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+    let text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    text = cleanAiInsightText(text);
 
     if (!text || text.length < 10) {
       return fallback;

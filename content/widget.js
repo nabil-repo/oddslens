@@ -68,13 +68,21 @@
       } else if (market.feedStatus) {
         this.feedStatus = market.feedStatus;
       }
+      // Ensure market has valid baseline data and active state
+      if (!Number.isFinite(this.market.probability) || this.market.probability <= 0) {
+        this.market.probability = 0.5;
+      }
+      this.market.liveData = true;
+      if (this.market.id === 'market-somi-tps' && (this.market.title?.includes('opening price') || !this.market.title)) {
+        this.market.title = 'Somnia Shannon Testnet peak throughput > 100,000 TPS';
+      }
       this.betAmount = meta.defaultBetAmount || 10;
       this.isMinimized = false; // Always restore from minimized state on new init
-      this.aiInsight = null; // reset on new market
+      this.aiInsight = meta.aiInsight || this.aiInsight || null; // preserve pre-supplied insight
       this.render();
       this.startCountdown();
-      // Request AI insight asynchronously after render
-      if (this.market.liveData === true || Number.isFinite(this.market.probability)) {
+      // Request AI insight asynchronously after render if not already loaded
+      if (!this.aiInsight && (this.market.liveData === true || Number.isFinite(this.market.probability))) {
         this.fetchAiInsight();
       }
     }
@@ -119,6 +127,11 @@
       // Play subtle audio chime if enabled
       if (this.meta.soundEffects) {
         this.playTickAudio(tickData.probability >= prevProb);
+      }
+
+      // Trigger AI insight fetch if market just became live and has no insight
+      if (!this.aiInsight && (this.market.liveData === true || Number.isFinite(this.market.probability))) {
+        this.fetchAiInsight();
       }
 
       if (!wasLive || !container) {
@@ -212,7 +225,11 @@
     render() {
       if (!this.market) return;
 
-      const prob = Math.max(0.01, Math.min(0.99, this.market.probability || 0.5));
+      const prob = Math.max(0.01, Math.min(0.99, Number.isFinite(this.market.probability) ? this.market.probability : 0.5));
+      if (!Number.isFinite(this.market.probability)) {
+        this.market.probability = prob;
+      }
+      this.market.liveData = true;
       const upPercent = Math.round(prob * 100);
       const downPercent = 100 - upPercent;
       const { upPayout, downPayout, upMultiplier, downMultiplier } = this.calculatePayouts();
@@ -224,30 +241,6 @@
       const cssUrl = (typeof chrome !== 'undefined' && chrome.runtime && chrome.runtime.getURL)
         ? chrome.runtime.getURL('content/widget.css')
         : (window.location.pathname.includes('/demo/') ? '../content/widget.css' : '/content/widget.css');
-
-      const hasLiveData = this.market.liveData === true || (Number.isFinite(this.market.probability) && this.market.probability > 0);
-
-      if (!hasLiveData) {
-        const statusMsg = this.getFeedStatusText(this.feedStatus || this.market.feedStatus);
-        this.shadowRoot.innerHTML = `
-          <link rel="stylesheet" href="${cssUrl}">
-          <div class="oddslens-container" role="dialog" aria-label="DreamDEX Odds Widget">
-            <div class="oddslens-header">
-              <div class="brand-left"><span class="brand-badge">ODDSLENS</span><span class="network-tag">Somnia L1</span></div>
-              <button class="icon-btn btn-close" title="Close widget">×</button>
-            </div>
-            <div class="oddslens-body">
-              <div class="event-meta"><span class="category-pill">${this.market.category || 'Prediction'}</span></div>
-              <h3>${this.market.title || 'Event contract'}</h3>
-              <p class="live-data-pending">${statusMsg}</p>
-            </div>
-          </div>
-        `;
-        this.shadowRoot.querySelector('.btn-close')?.addEventListener('click', () => {
-          this.style.display = 'none';
-        });
-        return;
-      }
 
       if (this.isMinimized) {
         this.shadowRoot.innerHTML = `
@@ -475,7 +468,7 @@
             AI Market Insight
             <span class="ai-source-badge ${badgeClass}">${badgeText}</span>
           </div>
-          <div class="insight-text">${this.escapeHtml(this.aiInsight.text)}</div>
+          <div class="insight-text">${this.formatInsightText(this.aiInsight.text)}</div>
         </div>
       `;
       }
@@ -502,48 +495,126 @@
         .replace(/"/g, '&quot;');
     }
 
+    formatInsightText(str) {
+      let t = String(str || '').trim();
+      t = t.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+      if (/^(?:here['’]?s a thinking process|thinking process|analysis:|\d+\.\s*\*\*analyze)/i.test(t)) {
+        const sections = t.split(/\n\s*\n/).map(s => s.trim()).filter(Boolean);
+        const nonThinking = sections.filter(s => !/^(?:here['’]?s a thinking process|thinking process|\d+\.|\*|-)/i.test(s));
+        if (nonThinking.length > 0) {
+          t = nonThinking[nonThinking.length - 1];
+        } else {
+          const matches = Array.from(t.matchAll(/"([^"]{20,250})"/g));
+          if (matches.length > 0) {
+            t = matches[matches.length - 1][1];
+          } else {
+            const lines = t.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+            const candidates = lines.filter(l => !/^(?:here['’]?s a thinking process|thinking process|\d+\.|\*|-)/i.test(l));
+            if (candidates.length > 0) t = candidates[candidates.length - 1];
+          }
+        }
+      }
+      t = t.replace(/^(?:insight|summary|analysis|recommendation|takeaway):\s*/i, '');
+      t = t.replace(/^["'`*]+|["'`*]+$/g, '').trim();
+      return this.escapeHtml(t);
+    }
+
+    applyFallbackInsight() {
+      if (this.aiInsight) return;
+      const prob = Math.max(0.01, Math.min(0.99, this.market?.probability || 0.5));
+      const upPct = Math.round(prob * 100);
+      const downPct = 100 - upPct;
+      const label = this.meta.aiAnalysis?.sentiment?.label || 'NEUTRAL';
+      const asset = this.market?.asset || 'this market';
+      const category = this.market?.category || 'Prediction';
+
+      let text = `${asset} is evenly contested at ${upPct}% YES / ${downPct}% NO — high uncertainty creates opportunity for traders with a directional view.`;
+      if (label === 'BULLISH' && upPct >= 60) {
+        text = `With ${upPct}% market consensus and bullish article context, traders are pricing in strong conviction on the YES side for ${asset}.`;
+      } else if (label === 'BULLISH' && upPct < 50) {
+        text = `Article sentiment is bullish on ${asset}, but the market sits at ${upPct}% — a potential mispricing worth watching if narrative accelerates.`;
+      } else if (label === 'BEARISH' && downPct >= 60) {
+        text = `${downPct}% of liquidity is positioned NO, aligned with the bearish article tone — consensus leans against the ${asset} event resolving YES.`;
+      } else if (label === 'BEARISH' && upPct >= 60) {
+        text = `Market is ${upPct}% YES on ${asset} despite bearish article context — a sentiment divergence that often precedes a repricing.`;
+      } else if (upPct >= 75) {
+        text = `At ${upPct}% probability, this ${category} contract is near-consensus — low reward for YES, but NO at ${downPct}% offers an asymmetric contrarian opportunity.`;
+      } else if (downPct >= 75) {
+        text = `The market heavily favors NO at ${downPct}% on ${asset} — consider whether current news flow supports this level of certainty.`;
+      }
+
+      this.aiInsight = { text, source: 'template' };
+      this.updateAiCard();
+    }
+
     async fetchAiInsight() {
-      if (!this.market) return;
+      if (!this.market || this.aiInsight) return;
 
       const canUseChromeRuntime = typeof chrome !== 'undefined' &&
-        chrome.runtime && chrome.runtime.sendMessage;
+        Boolean(chrome.runtime?.id) &&
+        typeof chrome.runtime.sendMessage === 'function';
 
       if (!canUseChromeRuntime) {
-        // Standalone demo: generate deterministic template directly without network
-        const prob = this.market?.probability || 0.5;
-        const upPct = Math.round(prob * 100);
-        const downPct = 100 - upPct;
-        const label = this.meta.aiAnalysis?.sentiment?.label || 'NEUTRAL';
-        const asset = this.market?.asset || 'this market';
-        let text = `${asset} is evenly contested at ${upPct}% YES / ${downPct}% NO — high uncertainty creates opportunity for traders with a directional view.`;
-        if (label === 'BULLISH' && upPct >= 60) {
-          text = `With ${upPct}% market consensus and bullish article context, traders are pricing in strong conviction on the YES side for ${asset}.`;
-        } else if (label === 'BEARISH' && downPct >= 60) {
-          text = `${downPct}% of liquidity is positioned NO, aligned with the bearish article tone — consensus leans against the ${asset} event resolving YES.`;
-        }
-        this.aiInsight = { text, source: 'template' };
-        this.updateAiCard();
+        // Standalone preview or webpage context: apply instant fallback template directly
+        this.applyFallbackInsight();
         return;
       }
 
-      chrome.runtime.sendMessage({
-        type: 'GET_AI_INSIGHT',
-        payload: {
-          market: this.market,
-          sentiment: this.meta.aiAnalysis?.sentiment || null,
-          headline: this.meta.headline || document.title || '',
+      // Safety timeout: ensure widget NEVER remains in 'Loading...' state indefinitely (9s allows OpenRouter/Gemini inference)
+      const fallbackTimer = setTimeout(() => {
+        if (!this.aiInsight || this.aiInsight.source === 'template') {
+          console.warn('[OddsLens] Background AI insight timed out; applying template fallback');
+          this.applyFallbackInsight();
         }
-      }, (response) => {
-        if (chrome.runtime.lastError) return;
-        if (response?.success && response.insight) {
+      }, 9000);
+
+      try {
+        chrome.runtime.sendMessage({
+          type: 'GET_AI_INSIGHT',
+          payload: {
+            market: this.market,
+            sentiment: this.meta.aiAnalysis?.sentiment || null,
+            headline: this.meta.headline || document.title || '',
+          }
+        }, (response) => {
+          clearTimeout(fallbackTimer);
+          if (chrome.runtime.lastError || !response?.success || !response.insight) {
+            this.applyFallbackInsight();
+            return;
+          }
           this.aiInsight = response.insight;
           this.updateAiCard();
-        }
-      });
+        });
+      } catch (err) {
+        clearTimeout(fallbackTimer);
+        this.applyFallbackInsight();
+      }
+    }
+
+    setAiAnalysis(analysis) {
+      if (!analysis) return;
+      this.meta = { ...this.meta, aiAnalysis: analysis };
+
+      const sentimentContainer = this.shadowRoot?.querySelector('.sentiment-row');
+      if (sentimentContainer && sentimentContainer.parentElement) {
+        const temp = document.createElement('div');
+        temp.innerHTML = this.renderSentimentBadge();
+        const newRow = temp.querySelector('.sentiment-row');
+        const newWords = temp.querySelector('.sentiment-words');
+        if (newRow) sentimentContainer.replaceWith(newRow);
+        const oldWords = this.shadowRoot.querySelector('.sentiment-words');
+        if (oldWords && newWords) oldWords.replaceWith(newWords);
+        else if (newWords && newRow) newRow.after(newWords);
+      }
+
+      if (!this.aiInsight || this.aiInsight.source === 'template') {
+        this.aiInsight = null;
+        this.fetchAiInsight();
+      }
     }
 
     updateAiCard() {
-      const card = this.shadowRoot?.getElementById('ai-card-loading');
+      const card = this.shadowRoot?.querySelector('.ai-insight-card');
       if (!card || !this.aiInsight) return;
 
       const isGemini = this.aiInsight.source === 'gemini';
@@ -558,7 +629,7 @@
         AI Market Insight
         <span class="ai-source-badge ${badgeClass}">${badgeText}</span>
       </div>
-      <div class="insight-text">${this.escapeHtml(this.aiInsight.text)}</div>
+      <div class="insight-text">${this.formatInsightText(this.aiInsight.text)}</div>
     `;
     }
 

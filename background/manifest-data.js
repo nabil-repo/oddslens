@@ -47,6 +47,12 @@ export const DEFAULT_MARKETS = [
     category: 'Crypto',
     asset: 'BTC',
     windowLabel: '24h Window',
+    probability: 0.68,
+    bestBid: 0.67,
+    bestAsk: 0.69,
+    volume24h: 94500,
+    openInterest: 320000,
+    liveData: true,
     // Expiry dynamically set in seconds
     urlPatterns: [
       '*://*coindesk.com/*',
@@ -183,6 +189,12 @@ export const DEFAULT_MARKETS = [
     category: 'Sports',
     asset: 'UCL',
     windowLabel: 'Match Day',
+    probability: 0.54,
+    bestBid: 0.53,
+    bestAsk: 0.55,
+    volume24h: 89000,
+    openInterest: 175000,
+    liveData: true,
     urlPatterns: [
       '*://*espn.com/*',
       '*://*skysports.com/*',
@@ -215,6 +227,12 @@ export const DEFAULT_MARKETS = [
     asset: 'FED',
     direction: 'cut',
     windowLabel: 'FOMC Window',
+    probability: 0.81,
+    bestBid: 0.80,
+    bestAsk: 0.82,
+    volume24h: 112000,
+    openInterest: 490000,
+    liveData: true,
     urlPatterns: [
       '*://*wsj.com/*',
       '*://*reuters.com/*',

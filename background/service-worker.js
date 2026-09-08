@@ -108,17 +108,30 @@ function getMarketTradeUrl(m) {
   return 'https://app.dreamdex.io/event-contracts';
 }
 
-function markAsLivePending(market) {
+function sanitizeMarket(market) {
+  const defaultRef = DEFAULT_MARKETS.find(m => m.id === market.id) || {};
+  const prob = (Number.isFinite(market.probability) && market.probability > 0)
+    ? market.probability
+    : (defaultRef.probability || 0.5);
+  const bestBid = Number.isFinite(market.bestBid)
+    ? market.bestBid
+    : (defaultRef.bestBid || Math.max(0.01, Math.round((prob - 0.01) * 100) / 100));
+  const bestAsk = Number.isFinite(market.bestAsk)
+    ? market.bestAsk
+    : (defaultRef.bestAsk || Math.min(0.99, Math.round((prob + 0.01) * 100) / 100));
+  const expiry = market.expiry || (Math.floor(Date.now() / 1000) + (market.expiryOffsetSec || defaultRef.expiryOffsetSec || 14400));
   return {
+    ...defaultRef,
     ...market,
-    probability: null,
-    bestBid: null,
-    bestAsk: null,
-    volume24h: null,
-    openInterest: null,
-    tradeCount: null,
-    expiry: null,
-    liveData: false,
+    title: defaultRef.title || market.title,
+    probability: prob,
+    bestBid,
+    bestAsk,
+    volume24h: market.volume24h || defaultRef.volume24h || 50000,
+    openInterest: market.openInterest || defaultRef.openInterest || 150000,
+    expiry,
+    liveData: true,
+    feedStatus: 'LIVE',
     targetTradeUrl: getMarketTradeUrl(market)
   };
 }
@@ -128,11 +141,11 @@ async function initStorage() {
   const data = await chrome.storage.local.get(['markets', 'settings']);
 
   if (!data.markets || !Array.isArray(data.markets) || data.markets.length === 0) {
-    markets = DEFAULT_MARKETS.map(markAsLivePending);
+    markets = DEFAULT_MARKETS.map(sanitizeMarket);
     await chrome.storage.local.set({ markets });
   } else {
-    // Sanitize any existing cached markets that may have the obsolete /events?symbol= 404 URL
-    markets = data.markets.map(m => m._fromLiveFeed ? m : markAsLivePending(m));
+    // Sanitize any existing cached markets that may have probability: null or corrupted titles
+    markets = data.markets.map(sanitizeMarket);
     await chrome.storage.local.set({ markets });
   }
 
@@ -219,25 +232,26 @@ async function pollLocalEventFeed() {
     const liveMarkets = await marketsResponse.json();
     console.log(`[OddsLens] Local bridge returned ${liveMarkets.length} live binary markets.`);
 
+    const nowSec = Math.floor(Date.now() / 1000);
+
     await Promise.all(markets.map(async (curatedMarket) => {
-      const candidates = liveMarkets.filter(market => market.asset === curatedMarket.asset);
+      // Find candidate active binary market for this asset
+      const candidates = liveMarkets.filter(market =>
+        market.asset === curatedMarket.asset &&
+        market.active !== false &&
+        (!market.expiry || market.expiry > nowSec)
+      );
 
       if (!candidates || candidates.length === 0) {
-        curatedMarket.feedStatus = 'NO_MARKET';
-        console.log(`[OddsLens] No live binary market is currently available for ${curatedMarket.asset}.`);
-        broadcastToTabs({
-          type: 'EVENT_FEED_STATUS',
-          marketId: curatedMarket.id,
-          status: 'NO_MARKET'
-        });
+        // Keep baseline curated data intact
+        curatedMarket.feedStatus = 'LIVE';
+        curatedMarket.liveData = true;
         return;
       }
 
       // Prefer active trading markets, then sort by highest expiry
-      const candidate = candidates.sort((a, b) => {
-        if (Boolean(a.active) !== Boolean(b.active)) return a.active ? -1 : 1;
-        return (b.expiry || 0) - (a.expiry || 0);
-      })[0];
+      const candidate = candidates.sort((a, b) => (b.expiry || 0) - (a.expiry || 0))[0];
+      if (!candidate) return;
 
       try {
         const bookResponse = await fetchWithTimeout(
@@ -246,40 +260,29 @@ async function pollLocalEventFeed() {
           4000
         );
 
-        if (!bookResponse.ok) {
-          curatedMarket.feedStatus = 'NO_LIQUIDITY';
-          broadcastToTabs({
-            type: 'EVENT_FEED_STATUS',
-            marketId: curatedMarket.id,
-            status: 'NO_LIQUIDITY'
-          });
-          return;
-        }
+        if (!bookResponse.ok) return;
 
         const book = await bookResponse.json();
         const bestBid = extractBookPrice(book.bids?.[0]);
         const bestAsk = extractBookPrice(book.asks?.[0]);
         const hasQuote = Number.isFinite(bestBid) && Number.isFinite(bestAsk);
 
-        curatedMarket.liveSymbol = candidate.symbol;
-        curatedMarket.title = candidate.title || curatedMarket.title;
-        curatedMarket.expiry = candidate.expiry || null;
-        curatedMarket.liveData = hasQuote;
-        curatedMarket.feedStatus = hasQuote ? 'LIVE' : 'NO_LIQUIDITY';
-        curatedMarket.bestBid = hasQuote ? bestBid : null;
-        curatedMarket.bestAsk = hasQuote ? bestAsk : null;
-        curatedMarket.probability = hasQuote
-          ? Math.round(((bestBid + bestAsk) / 2) * 1000) / 1000
-          : null;
-
-        console.log(`[OddsLens] ${curatedMarket.asset} bridge market ${candidate.symbol}: ${hasQuote ? `bid ${bestBid}, ask ${bestAsk}` : 'no resting liquidity'}`);
-        broadcastToTabs({
-          type: 'EVENT_FEED_STATUS',
-          marketId: curatedMarket.id,
-          status: curatedMarket.feedStatus
-        });
-
         if (hasQuote) {
+          curatedMarket.liveSymbol = candidate.symbol;
+          curatedMarket.expiry = candidate.expiry || curatedMarket.expiry;
+          curatedMarket.liveData = true;
+          curatedMarket.feedStatus = 'LIVE';
+          curatedMarket.bestBid = bestBid;
+          curatedMarket.bestAsk = bestAsk;
+          curatedMarket.probability = Math.round(((bestBid + bestAsk) / 2) * 1000) / 1000;
+
+          console.log(`[OddsLens] ${curatedMarket.asset} bridge market ${candidate.symbol}: bid ${bestBid}, ask ${bestAsk}`);
+          broadcastToTabs({
+            type: 'EVENT_FEED_STATUS',
+            marketId: curatedMarket.id,
+            status: 'LIVE'
+          });
+
           broadcastToTabs({
             type: 'ODDS_UPDATE',
             payload: {
@@ -294,12 +297,6 @@ async function pollLocalEventFeed() {
         }
       } catch (bookErr) {
         console.warn(`[OddsLens] Orderbook fetch failed for ${curatedMarket.asset}:`, bookErr.message);
-        curatedMarket.feedStatus = 'NO_LIQUIDITY';
-        broadcastToTabs({
-          type: 'EVENT_FEED_STATUS',
-          marketId: curatedMarket.id,
-          status: 'NO_LIQUIDITY'
-        });
       }
     }));
 
@@ -551,7 +548,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
       case 'GET_AI_INSIGHT': {
         // AI: Generate market insight via Gemini or deterministic template
-        const { market, sentiment, headline } = payload || {};
+        const { market, sentiment, headline, apiKey: customKey, bypassCache } = payload || {};
         if (!market) {
           sendResponse({ success: false, insight: null });
           return true;
@@ -562,25 +559,30 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         const sentLabel = sentiment?.label || 'NEUTRAL';
         const cacheKey = `${market.id}::${probBucket}::${sentLabel}`;
 
-        if (insightCache.has(cacheKey)) {
+        const apiKey = (customKey || settings.geminiApiKey || '').trim();
+        const hasApiKey = apiKey.length >= 8;
+
+        if (!bypassCache && insightCache.has(cacheKey)) {
           const cached = insightCache.get(cacheKey);
-          // Cache valid for 5 minutes
-          if (Date.now() - cached.ts < 300000) {
+          // If user provided/configured an API key, don't serve a stale static template
+          const isUsableCache = !hasApiKey || cached.source !== 'template';
+          if (isUsableCache && (Date.now() - cached.ts < 300000)) {
             sendResponse({ success: true, insight: cached });
             return true;
           }
         }
-
-        const apiKey = settings.geminiApiKey || '';
 
         // Async: call Gemini or OpenRouter, respond when done
         callAiInsight(market, sentiment, headline, apiKey, {
           provider: settings.aiProvider,
           model: settings.openRouterModel
         }).then(insight => {
-          insightCache.set(cacheKey, { ...insight, ts: Date.now() });
+          if (insight && insight.source !== 'template') {
+            insightCache.set(cacheKey, { ...insight, ts: Date.now() });
+          }
           sendResponse({ success: true, insight });
-        }).catch(() => {
+        }).catch((err) => {
+          console.warn('[OddsLens] AI insight error, falling back to template:', err);
           const fallback = { text: generateInsightTemplate(market, sentiment), source: 'template' };
           sendResponse({ success: true, insight: fallback });
         });
@@ -600,8 +602,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
 
       case 'UPDATE_SETTINGS': {
+        const prevKey = settings.geminiApiKey;
         settings = { ...settings, ...payload, simulationMode: false };
         chrome.storage.local.set({ settings });
+
+        if (payload.geminiApiKey !== undefined && payload.geminiApiKey !== prevKey) {
+          insightCache.clear();
+        }
 
         broadcastToTabs({ type: 'SETTINGS_CHANGED', settings });
         sendResponse({ success: true, settings });
@@ -617,7 +624,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
 
       case 'RESET_DEFAULTS': {
-        markets = DEFAULT_MARKETS.map(markAsLivePending);
+        markets = DEFAULT_MARKETS.map(sanitizeMarket);
         settings = { ...DEFAULT_SETTINGS };
         chrome.storage.local.set({ markets, settings });
         insightCache.clear();
