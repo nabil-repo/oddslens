@@ -563,7 +563,7 @@
       // Safety timeout: ensure widget NEVER remains in 'Loading...' state indefinitely (9s allows OpenRouter/Gemini inference)
       const fallbackTimer = setTimeout(() => {
         if (!this.aiInsight || this.aiInsight.source === 'template') {
-          console.warn('[OddsLens] Background AI insight timed out; applying template fallback');
+          // console.warn('[OddsLens] Background AI insight timed out; applying template fallback');
           this.applyFallbackInsight();
         }
       }, 9000);

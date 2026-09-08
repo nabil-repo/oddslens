@@ -269,5 +269,5 @@ export const DEFAULT_SETTINGS = {
   aiProvider: 'auto', // 'auto' | 'openrouter' | 'gemini'
   openRouterModel: 'openrouter/free',
   aiEnabled: true, // Enable/disable AI analysis features
-  demoServerUrl: 'http://localhost:3000', // Hosted demo URL (e.g. http://localhost:3000 or Vercel URL)
+  demoServerUrl: 'http://localhost:3000', // Local demo server URL — run `npm start` to serve demo articles
 };

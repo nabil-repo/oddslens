@@ -8,6 +8,7 @@
 [![Somnia Network](https://img.shields.io/badge/Network-Somnia%20Shannon%20Testnet%20(50312)-7928CA?style=for-the-badge&logo=ethereum)](https://shannon-explorer.somnia.network)
 [![DreamDEX](https://img.shields.io/badge/Protocol-DreamDEX%20Event%20Contracts-00F0FF?style=for-the-badge)](https://docs.dreamdex.io/developers/event-contracts)
 [![Manifest V3](https://img.shields.io/badge/Chrome%20Extension-Manifest%20V3-00FF87?style=for-the-badge)](https://developer.chrome.com/docs/extensions/mv3/intro/)
+[![Demo Video](https://img.shields.io/badge/Demo%20Video-Watch%20on%20YouTube-FF0000?style=for-the-badge&logo=youtube)](https://youtu.be/3C7xApiKC6U)
 
 > **Surfacing live DreamDEX Event Contract odds directly inline wherever sports fans, crypto traders, and news readers are already reading — with a one-click path to trade.**
 
@@ -78,8 +79,8 @@ graph TD
     L[Options & AI Config Dashboard] -->|chrome.storage.local| D
     M[Extension Popup Mini-Dashboard] -->|chrome.runtime| D
 
-    N[Vercel Serverless API] -->|@somnia-chain/markets-sdk| E
-    N -->|Live market hydration| D
+    N[Local Demo Server] -->|somnia-chain/markets-sdk| E
+    N -->|API routes + static files| D
 ```
 
 ### Key Technical Highlights:
@@ -87,7 +88,7 @@ graph TD
 - **AI-Powered Sentiment & Narrative Analysis**: Built-in `background/ai-engine.js` runs lexical AFINN-165 sentiment scoring directly in the browser, classifying article tone as `BULLISH`, `BEARISH`, or `NEUTRAL` with intensity scores and keyword extraction.
 - **Gemini 2.5 Flash Market Synthesis**: Automatically connects to Google Gemini 2.5 Flash to synthesize how the news narrative impacts contract probability, outputting actionable 2-sentence market insights with smart template fallback if offline.
 - **Dual-Feed Reliability**: Real connection to the DreamDEX public WebSocket API with automatic exponential backoff reconnects and heartbeat management. If testnet order books are quiet during a demo, a Brownian-motion simulation engine keeps odds and spreads alive.
-- **Vercel Serverless API**: `/api/dreamdex/event-markets.js` and `/api/dreamdex/event-orderbooks.js` proxy live market data through `@somnia-chain/markets-sdk` with 60-second response caching and full CORS support.
+- **Local Demo Server API**: `demo/demo-server.js` exposes `/api/dreamdex/event-markets` and `/api/dreamdex/event-orderbooks` via the built-in `somnia-chain/markets-sdk` integration with 60-second response caching and CORS headers — no external deployment needed.
 - **Urgency & Open Interest Indicators**: Real-time resolution countdown highlights expiring windows (<24h yellow, <2h pulsing red), paired with on-chain Open Interest (OI) for market depth visibility.
 - **Zero-Build Extension Runtime**: Built with native ES Modules, requiring zero compilation to load directly into Google Chrome, Brave, or Edge.
 
@@ -125,7 +126,7 @@ graph TD
 oddslens/
 ├── manifest.json              # Manifest V3 configuration (permissions, host permissions, resources)
 ├── package.json               # Node dependencies: @somnia-chain/markets-sdk, viem, vite
-├── vercel.json                # Vercel deployment config with API route rewrites
+├── vercel.json                # Vercel config (optional — local server covers all API routes natively)
 ├── vite.config.js             # Vite config (used for build/preview only; extension runs zero-build)
 ├── background/
 │   ├── service-worker.js     # Central service worker: context menus, feeds, block polling, AI router
@@ -190,19 +191,16 @@ cd oddslens
 4. Select the `oddslens` root folder.
 5. OddsLens is now installed! Pin it to your toolbar.
 
-### Step 3: Run or Host the Demo Hub
-#### Option A: Local Demo Server (Default)
+### Step 3: Run the Demo Server
 ```bash
 npm start
 ```
-Open **`http://localhost:3000/demo/index.html`** in your browser to explore the interactive demo suite and judging hub.
+Open **`http://localhost:3000/demo/index.html`** in your browser. The demo server handles everything:
+- Serves all 6 demo HTML articles
+- Exposes `/api/dreamdex/event-markets` and `/api/dreamdex/event-orderbooks` via the built-in `@somnia-chain/markets-sdk` integration
+- No external deployment or cloud hosting required
 
-#### Option B: Hosted Deployment (Vercel / Cloud)
-The repository includes `vercel.json` and serverless API endpoints in `/api`. Deploy to Vercel with:
-```bash
-npx vercel
-```
-Then, in the **OddsLens Options** dashboard (`chrome-extension://.../options/options.html`), set the **Hosted Demo URL** to your deployment domain (e.g. `https://oddslens.vercel.app`). All demo links and widget tests will automatically open against your hosted domain.
+> **Tip:** The extension reads `demoServerUrl` from Options (default: `http://localhost:3000`). As long as the server is running, all demo article links, widget tests, and API calls work automatically.
 
 ---
 
