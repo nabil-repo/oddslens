@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="icons/icon.svg" width="96" height="96" alt="OddsLens Logo" />
+</p>
+
 # OddsLens — Inline DreamDEX Odds Browser Extension
 ### Somnia × DreamDEX Event Contracts Hackathon — Grand Prize Submission
 
@@ -12,10 +16,6 @@
 ## 1. Problem & Opportunity
 
 Decentralized prediction markets and event contracts typically only reach users who already know about them and actively navigate into a specialized trading terminal. The audiences most likely to care about real-world outcomes — sports fans reading a match preview, voters reading political news, traders reading crypto market breakdowns — **never see live odds where they are already consuming content**.
-
-Across the 26+ BUIDLs submitted to the Somnia × DreamDEX hackathon, virtually every entry builds **inward** (autonomous trading bots, market-making scripts, hedging engines, on-chain Black-Scholes analytics). 
-
-**None solve distribution to people outside of crypto trading apps.**
 
 **OddsLens solves this distribution bottleneck.**
 
@@ -48,10 +48,10 @@ To ensure the product is both commercially defensible and 100% dependable on cam
 | Hackathon Criterion | Weight | How OddsLens Delivers |
 |---|---|---|
 | **Innovation & Originality** | 20% | **Zero overlap** with existing submissions. Rather than another trading terminal or arbitrage bot, OddsLens builds outward distribution, transforming the entire web into an interactive DreamDEX storefront — enhanced with **client-side NLP entity extraction and Gemini / OpenRouter AI trading synthesis**. |
-| **Technical Implementation** | 25% | Native Manifest V3 service worker, real DreamDEX WebSocket feed (`wss://stg.api.dreamdex.io/v0/ws/public`), Somnia Shannon RPC integration (`50312`), **OpenRouter & Gemini AI API integration**, **AFINN-165 Sentiment Engine**, Shadow DOM CSS isolation, and a resilient Brownian-motion volatility streamer. |
+| **Technical Implementation** | 25% | Native Manifest V3 service worker, real DreamDEX WebSocket feed (`wss://stg.api.dreamdex.io/v0/ws/public`), Somnia Shannon RPC integration (`50312`), **OpenRouter & Gemini AI API integration**, **AFINN-165 Sentiment Engine**, Shadow DOM CSS isolation, Vercel serverless API proxy using `@somnia-chain/markets-sdk`, and a resilient Brownian-motion volatility streamer. |
 | **UX & Design** | 20% | Cyber dark-mode fintech aesthetic, dual-fill animated odds gauge, orderbook spread readout, **Open Interest (OI) metric**, **Settlement Urgency badge**, **AI Sentiment Pill** (`BULLISH` / `BEARISH`), **dynamic AI Insight card with typewriter reveal**, and quick bet calculator. |
-| **Business & Ecosystem Impact** | 20% | Directly drives net-new user acquisition and volume to DreamDEX from non-crypto web traffic. Includes an editable **Options Page** with AI API key configuration, publisher wallet attribution, and custom contract mappings. |
-| **Presentation & Demo** | 15% | Rock-solid multi-beat demo (Manual Mode + Curated Auto-Detect + AI Insights) with built-in realistic demo articles and interactive Demo Hub for instant judging reproduction. |
+| **Business & Ecosystem Impact** | 20% | Directly drives net-new user acquisition and volume to DreamDEX from non-crypto web traffic. Includes an editable **Options Page** with AI API key configuration, publisher wallet attribution, and custom contract mappings. Six curated demo articles spanning Crypto, Ethereum, Sports, AI Agents, Somnia Ecosystem, and Macro verticals. |
+| **Presentation & Demo** | 15% | Rock-solid multi-beat demo (Manual Mode + Curated Auto-Detect + AI Insights) with **6 built-in realistic demo articles** and an interactive Demo Hub for instant judging reproduction. |
 
 ---
 
@@ -77,6 +77,9 @@ graph TD
     
     L[Options & AI Config Dashboard] -->|chrome.storage.local| D
     M[Extension Popup Mini-Dashboard] -->|chrome.runtime| D
+
+    N[Vercel Serverless API] -->|@somnia-chain/markets-sdk| E
+    N -->|Live market hydration| D
 ```
 
 ### Key Technical Highlights:
@@ -84,6 +87,7 @@ graph TD
 - **AI-Powered Sentiment & Narrative Analysis**: Built-in `background/ai-engine.js` runs lexical AFINN-165 sentiment scoring directly in the browser, classifying article tone as `BULLISH`, `BEARISH`, or `NEUTRAL` with intensity scores and keyword extraction.
 - **Gemini 2.5 Flash Market Synthesis**: Automatically connects to Google Gemini 2.5 Flash to synthesize how the news narrative impacts contract probability, outputting actionable 2-sentence market insights with smart template fallback if offline.
 - **Dual-Feed Reliability**: Real connection to the DreamDEX public WebSocket API with automatic exponential backoff reconnects and heartbeat management. If testnet order books are quiet during a demo, a Brownian-motion simulation engine keeps odds and spreads alive.
+- **Vercel Serverless API**: `/api/dreamdex/event-markets.js` and `/api/dreamdex/event-orderbooks.js` proxy live market data through `@somnia-chain/markets-sdk` with 60-second response caching and full CORS support.
 - **Urgency & Open Interest Indicators**: Real-time resolution countdown highlights expiring windows (<24h yellow, <2h pulsing red), paired with on-chain Open Interest (OI) for market depth visibility.
 - **Zero-Build Extension Runtime**: Built with native ES Modules, requiring zero compilation to load directly into Google Chrome, Brave, or Edge.
 
@@ -92,12 +96,15 @@ graph TD
 ## 5. Somnia & DreamDEX Protocol Integration
 
 ### Network Configuration
-- **Network Name**: Somnia Shannon Testnet
-- **Chain ID**: `50312` (`0xc488`)
-- **RPC Endpoint**: `https://api.infra.testnet.somnia.network/`
-- **Block Explorer**: [https://shannon-explorer.somnia.network](https://shannon-explorer.somnia.network)
-- **DreamDEX App**: [https://app.dreamdex.io](https://app.dreamdex.io)
-- **DreamDEX Public WebSocket**: `wss://stg.api.dreamdex.io/v0/ws/public`
+
+| Parameter | Somnia Shannon Testnet | Somnia Mainnet |
+|---|---|---|
+| **Chain ID** | `50312` (`0xc488`) | `5031` (`0x13a7`) |
+| **RPC Endpoint** | `https://api.infra.testnet.somnia.network/` | `https://dream-rpc.somnia.network` |
+| **Block Explorer** | [shannon-explorer.somnia.network](https://shannon-explorer.somnia.network) | [explorer.somnia.network](https://explorer.somnia.network) |
+| **DreamDEX WebSocket** | `wss://stg.api.dreamdex.io/v0/ws/public` | `wss://api.dreamdex.io/v0/ws/public` |
+| **DreamDEX App** | [app.dreamdex.io](https://app.dreamdex.io) | [app.dreamdex.io](https://app.dreamdex.io) |
+| **Collateral Token** | `tUSDC` — 6 decimals | `USDso` — 18 decimals |
 
 ### Deployed Core Protocol Contracts
 | Contract Name | On-Chain Address (Somnia Shannon Testnet) |
@@ -106,6 +113,8 @@ graph TD
 | **MarketsCore** | `0x2802504314685D89bF6C992CA5a8e7cC78bc0294` |
 | **BinarySettlement** | `0xbF4a49e0Dfd092e5FBE8E5761064C49533e6Ed23` |
 | **OutcomeToken6909** | `0xB52c5934113Af5c0Bb20eb3C72290C8215f755b9` |
+| **OracleHub** | `0xe40db387cC98601Dd11bd634fF2f3AD5686dE32b` |
+| **CollateralRouter** | `0xbC0C9834B15ACE38bB50dDaa7d7f7C7CC4DC183C` |
 | **Collateral (tUSDC)** | `0x70a86D8842FB63C4Ad2b7cdddF530eBf1BB25d8E` (6 decimals) |
 
 ---
@@ -115,10 +124,13 @@ graph TD
 ```
 oddslens/
 ├── manifest.json              # Manifest V3 configuration (permissions, host permissions, resources)
+├── package.json               # Node dependencies: @somnia-chain/markets-sdk, viem, vite
+├── vercel.json                # Vercel deployment config with API route rewrites
+├── vite.config.js             # Vite config (used for build/preview only; extension runs zero-build)
 ├── background/
 │   ├── service-worker.js     # Central service worker: context menus, feeds, block polling, AI router
 │   ├── ai-engine.js          # Gemini 2.5 Flash caller, AFINN-165 sentiment, NLP entity matcher
-│   ├── manifest-data.js      # Default curated markets, network parameters, contract addresses
+│   ├── manifest-data.js      # 6 curated markets, dual network presets, contract addresses
 │   ├── matching-engine.js    # Regex glob URL matcher & token relevance scoring algorithm
 │   ├── dreamdex-client.js    # DreamDEX WebSocket client with ping/pong and Somnia RPC query
 │   └── mock-streamer.js      # Brownian-motion market volatility engine for fail-safe demos
@@ -134,14 +146,24 @@ oddslens/
 │   ├── options.html          # Custom URL/keyword mapping & Gemini AI configuration dashboard
 │   ├── options.js            # CRUD logic, Gemini API key tester, JSON manifest import/export
 │   └── options.css           # Data table, AI config cards, and modal styles
+├── api/
+│   └── dreamdex/
+│       ├── event-markets.js     # Vercel serverless: @somnia-chain/markets-sdk market list (60s cache)
+│       └── event-orderbooks.js  # Vercel serverless: live order book snapshots proxy
 ├── demo/
-│   ├── demo-server.js        # Zero-dependency local preview server
+│   ├── demo-server.js        # Zero-dependency local preview server (port 3000)
 │   ├── index.html            # Interactive Demo Hub with live embedded widget & judging guide
-│   ├── crypto-article.html   # Realistic crypto publication article (CoinDesk style)
-│   ├── sports-article.html   # Realistic sports publication article (ESPN style)
-│   ├── macro-article.html    # Realistic macro publication article (WSJ style)
+│   ├── crypto-article.html   # Realistic crypto publication article (CoinDesk style) → BTC + SOMI markets
+│   ├── eth-article.html      # Ethereum / DeFi article (Bankless style) → ETH market
+│   ├── sports-article.html   # Sports publication article (ESPN style) → UCL market
+│   ├── ai-agent-article.html # AI Agents / quant article (VentureBeat style) → BOTNAV market
+│   ├── somnia-article.html   # Somnia ecosystem article → SOMI TPS market
+│   ├── macro-article.html    # Macro publication article (WSJ style) → FED FOMC market
 │   ├── article.css           # Editorial typography and styling
 │   └── demo.css              # Demo Hub presentation styling
+├── scripts/
+│   ├── generate-icons.js     # SVG → PNG icon batch generator for 16/48/128px
+│   └── test-matching-engine.js  # Automated test suite for URL + text matching engine
 ├── docs/
 │   ├── DEMO_VIDEO_GUIDE.md   # Script & screenflow for 2-3 minute judging demo video
 │   ├── DORAHACKS_SUBMISSION.md # Ready-to-submit DoraHacks questionnaire answers
@@ -184,16 +206,35 @@ Then, in the **OddsLens Options** dashboard (`chrome-extension://.../options/opt
 
 ---
 
-## 8. 2–3 Minute Demo Video Script
+## 8. Demo Articles & Test Flows
 
-| Timecode | Beat | What to Show & Say |
-|---|---|---|
-| **00:00 – 00:20** | **The Distribution Problem** | *"Prediction markets on Somnia are powerful, but right now you only see them if you’re already inside a trading terminal. 99% of sports and news readers never see live odds where they read. OddsLens brings DreamDEX to where the users already are."* |
-| **00:20 – 00:45** | **Manual Selection Mode** | Highlight *"Bitcoin"* on any article &rarr; right-click &rarr; select *"Check DreamDEX odds for this"*. Show the sleek widget pop up with real-time odds (67% UP / 33% DOWN), spread, and urgency countdown badge. |
-| **00:45 – 01:20** | **Curated Auto-Detect + AI Insights** | Open the Crypto or Macro demo article. Watch OddsLens slide in automatically: highlight the **`🟢 BULLISH (72%)`** sentiment badge derived from article NLP, followed by the **Gemini 2.5 Flash trading synthesis** comparing news tone against the order book consensus. |
-| **01:20 – 01:45** | **1-Click Trade Flow & Payout Calculator** | Click the `$10` and `$25` quick bet chips to preview expected payout. Click *"Trade on DreamDEX ↗"* to show the deep link directly to the on-chain event contract on Somnia. |
-| **01:45 – 02:15** | **AI Config & Ecosystem Options Dashboard** | Open the **Options Dashboard**. Demonstrate the Gemini API key tester, adding custom keyword/URL mappings, and running live queries through the Matcher Sandbox. |
-| **02:15 – 02:30** | **Closing & Somnia Ecosystem Impact** | Summarize why distribution and AI intelligence are the missing keys to event contract adoption on Somnia. |
+OddsLens ships with **6 curated demo articles** covering all supported market verticals. Each article is designed to trigger Curated Auto-Detect on page load and is suitable for the **Manual Selection mode** test as well.
+
+| Article | URL (local) | Market Triggered | Style |
+|---|---|---|---|
+| **Crypto News** | `/demo/crypto-article.html` | `BTC-100K` + `SOMI-TPS` | CoinDesk |
+| **Ethereum / DeFi** | `/demo/eth-article.html` | `ETH-UP` | Bankless |
+| **Sports Preview** | `/demo/sports-article.html` | `UCL-FINAL` | ESPN |
+| **AI Agents** | `/demo/ai-agent-article.html` | `BOTNAV` | VentureBeat |
+| **Somnia Ecosystem** | `/demo/somnia-article.html` | `SOMI-TPS` | Somnia.network |
+| **Macro / Central Bank** | `/demo/macro-article.html` | `FED-RATE-CUT-50BP` | WSJ |
+
+### Curated Markets Manifest (6 Markets)
+
+| Market ID | Title | Category | Default Probability |
+|---|---|---|---|
+| `market-btc-100k` | Bitcoin to surpass $100,000 before window expiry | Crypto | 68% |
+| `market-eth-strike` | Ethereum to close at or above opening price | Crypto / DeFi | 54% |
+| `market-somi-tps` | Somnia Shannon Testnet peak throughput > 100,000 TPS | Ecosystem | 72% |
+| `market-botnav` | Will autonomous agent Kestrel close session with higher NAV? | AI Agents | 61% |
+| `market-ucl-final` | UEFA Champions League: Will Real Madrid defeat Manchester City? | Sports | 54% |
+| `market-fed-rates` | Federal Reserve to cut rates by 50 bps at upcoming FOMC | Macro | 81% |
+
+### Running the Test Suite
+```bash
+node scripts/test-matching-engine.js
+```
+Runs 11 automated assertions covering URL pattern matching and text selection matching across all 6 market categories, confirming the scoring algorithm correctness.
 
 ---
 
