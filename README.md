@@ -44,19 +44,8 @@ To ensure the product is both commercially defensible and 100% dependable on cam
 
 ---
 
-## 3. How OddsLens Wins on Judging Criteria
 
-| Hackathon Criterion | Weight | How OddsLens Delivers |
-|---|---|---|
-| **Innovation & Originality** | 20% | **Zero overlap** with existing submissions. Rather than another trading terminal or arbitrage bot, OddsLens builds outward distribution, transforming the entire web into an interactive DreamDEX storefront — enhanced with **client-side NLP entity extraction and Gemini / OpenRouter AI trading synthesis**. |
-| **Technical Implementation** | 25% | Native Manifest V3 service worker, real DreamDEX WebSocket feed (`wss://stg.api.dreamdex.io/v0/ws/public`), Somnia Shannon RPC integration (`50312`), **OpenRouter & Gemini AI API integration**, **AFINN-165 Sentiment Engine**, Shadow DOM CSS isolation, Vercel serverless API proxy using `@somnia-chain/markets-sdk`, and a resilient Brownian-motion volatility streamer. |
-| **UX & Design** | 20% | Cyber dark-mode fintech aesthetic, dual-fill animated odds gauge, orderbook spread readout, **Open Interest (OI) metric**, **Settlement Urgency badge**, **AI Sentiment Pill** (`BULLISH` / `BEARISH`), **dynamic AI Insight card with typewriter reveal**, and quick bet calculator. |
-| **Business & Ecosystem Impact** | 20% | Directly drives net-new user acquisition and volume to DreamDEX from non-crypto web traffic. Includes an editable **Options Page** with AI API key configuration, publisher wallet attribution, and custom contract mappings. Six curated demo articles spanning Crypto, Ethereum, Sports, AI Agents, Somnia Ecosystem, and Macro verticals. |
-| **Presentation & Demo** | 15% | Rock-solid multi-beat demo (Manual Mode + Curated Auto-Detect + AI Insights) with **6 built-in realistic demo articles** and an interactive Demo Hub for instant judging reproduction. |
-
----
-
-## 4. Technical Architecture & AI Engine
+## 3. Technical Architecture & AI Engine
 
 ```mermaid
 graph TD
@@ -94,7 +83,7 @@ graph TD
 
 ---
 
-## 5. Somnia & DreamDEX Protocol Integration
+## 4. Somnia & DreamDEX Protocol Integration
 
 ### Network Configuration
 
@@ -120,7 +109,7 @@ graph TD
 
 ---
 
-## 6. Project Structure
+## 5. Project Structure
 
 ```
 oddslens/
@@ -176,7 +165,7 @@ oddslens/
 
 ---
 
-## 7. Quick Start & Installation
+## 6. Quick Start & Installation
 
 ### Step 1: Clone Repository
 ```bash
@@ -204,7 +193,7 @@ Open **`http://localhost:3000/demo/index.html`** in your browser. The demo serve
 
 ---
 
-## 8. Demo Articles & Test Flows
+## 7. Demo Articles & Test Flows
 
 OddsLens ships with **6 curated demo articles** covering all supported market verticals. Each article is designed to trigger Curated Auto-Detect on page load and is suitable for the **Manual Selection mode** test as well.
 
@@ -236,7 +225,7 @@ Runs 11 automated assertions covering URL pattern matching and text selection ma
 
 ---
 
-## 9. Post-Hackathon Roadmap
+## 8. Post-Hackathon Roadmap
 
 - **Autonomous Multimodal Sentiment**: Expand the AI engine to evaluate article charts, social video transcripts, and audio feeds using Gemini 2.5 Multimodal APIs.
 - **Publisher Monetization & Affiliate Attribution**: Allow bloggers and media organizations to configure their Somnia wallet in Options to earn a continuous royalty on trading volume routed through their publications.
@@ -245,6 +234,6 @@ Runs 11 automated assertions covering URL pattern matching and text selection ma
 
 ---
 
-## 10. License
+## 19. License
 
 MIT License. Developed for the **Somnia × DreamDEX Event Contracts Hackathon (August - September 2026)**.
